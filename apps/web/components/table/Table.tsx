@@ -98,6 +98,19 @@ export function Table({
               ))}
           </div>
         )}
+        {hand?.fair && (
+          <div className="text-[10px] text-white/40">
+            {hand.phase === 'complete' ? (
+              <a className="underline" href={`/verify?room=${view.room.code}&n=${hand.handNo}`} target="_blank" rel="noreferrer">
+                Hand #{hand.handNo} · verify shuffle
+              </a>
+            ) : (
+              <span title={`SHA-256 of the server seed: ${hand.fair.serverSeedHash}`}>
+                Hand #{hand.handNo} · 🔒 {hand.fair.serverSeedHash.slice(0, 10)}…
+              </span>
+            )}
+          </div>
+        )}
         {!hand && <div className="text-sm text-white/60">{view.notice ?? (view.room.status === 'OPEN' ? 'Waiting for the host to start' : '')}</div>}
         {hand?.phase === 'complete' && view.notice && <div className="text-xs text-white/50">{view.notice}</div>}
       </div>

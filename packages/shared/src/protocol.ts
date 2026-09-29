@@ -220,6 +220,6 @@ export interface ServerEvents {
   'chat:message': (m: ChatMessage) => void;
   'chat:history': (m: ChatMessage[]) => void;
   'chat:reaction': (r: { userId: string; username: string; seat: number | null; emoji: string }) => void;
-  'fair:commit': (c: { handNo: number; serverSeedHash: string }) => void;
+  'fair:commit': (c: { handNo: number; serverSeedHash: string; handId: string }) => void;
   'room:kicked': (r: { reason: string }) => void;
 }

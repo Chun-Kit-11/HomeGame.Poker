@@ -572,7 +572,11 @@ export class Room {
     }
     this.notice = null;
     this.starting = true;
-    const participants = pos.dealtSeats.map((seat) => ({ seat, userId: this.seats[seat]!.userId }));
+    const participants = pos.dealtSeats.map((seat) => ({
+      seat,
+      userId: this.seats[seat]!.userId,
+      connected: this.isConnected(this.seats[seat]!.userId),
+    }));
     const handNo = this.handNo + 1;
     this.deps.dealer
       .prepare(handNo, participants)
@@ -765,7 +769,7 @@ export class Room {
   }
 
   protected saveHand(hand: HandState, potTotalAmount: number) {
-    const fair = this.handFair ?? { serverSeedHash: '', serverSeed: '', clientSeeds: [] };
+    const fair = this.handFair ?? { serverSeedHash: '', serverSeed: '', handId: '', clientSeeds: [] };
     const labels = positionLabels(
       hand.players.map((p) => p.seat),
       hand.config.buttonSeat,
@@ -778,7 +782,7 @@ export class Room {
       startedAt: this.handStartedAt,
       serverSeedHash: fair.serverSeedHash,
       serverSeed: fair.serverSeed,
-      clientSeeds: fair.clientSeeds,
+      clientSeeds: { handId: fair.handId, seeds: fair.clientSeeds },
       smallBlind: hand.config.smallBlind,
       bigBlind: hand.config.bigBlind,
       ante: hand.config.bigBlindAnte ?? 0,

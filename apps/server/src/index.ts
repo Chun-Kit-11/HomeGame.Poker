@@ -8,11 +8,12 @@ import { realClock } from './clock';
 import { db } from './db';
 import { env } from './env';
 import { createApiApp } from './http/app';
+import { handsRouter } from './http/hands';
 import { roomsRouter } from './http/rooms';
 import { PrismaPersistence } from './persistence';
-import { CryptoDealer } from './rooms/dealer';
+import { FairDealer } from './rooms/dealer';
 import { RoomManager } from './rooms/RoomManager';
-import { attachGateway, socketTransport } from './sockets/gateway';
+import { attachGateway, roomChannel, socketTransport } from './sockets/gateway';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const webDir = path.resolve(here, '../../web');
@@ -26,13 +27,14 @@ async function main() {
   const manager = new RoomManager({
     persistence: new PrismaPersistence(),
     clock: realClock,
-    dealer: () => new CryptoDealer(),
+    dealer: (code) => new FairDealer(code, (event, payload) => io.to(roomChannel(code)).emit(event, payload), realClock),
     transport: (code) => socketTransport(io, code),
     loadRoom: (code) => db().room.findUnique({ where: { code }, select: { id: true, code: true, hostId: true, config: true, status: true, snapshot: true } }),
   });
 
   const app = createApiApp((api) => {
     api.use('/rooms', roomsRouter(manager));
+    api.use('/hands', handsRouter());
   });
   app.all('/{*path}', (req, res) => handle(req, res));
 
