@@ -199,6 +199,8 @@ export interface TableView {
     players: PlayerStatsView[];
   };
   notice: string | null;
+  /** Server clock when this view was built (for countdowns on devices with skewed clocks) */
+  serverNow: number;
 }
 
 export interface ChatMessage {

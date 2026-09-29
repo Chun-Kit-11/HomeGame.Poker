@@ -1043,6 +1043,7 @@ export class Room {
       tournament: this.tournamentView(userId),
       stats: this.statsView(),
       notice: this.notice,
+      serverNow: this.deps.clock.now(),
     };
   }
 
