@@ -1,0 +1,168 @@
+/**
+ * Offline precomputation for hand analysis (run: npx tsx scripts/precompute-preflop.ts).
+ *
+ * 1. Equity of each of the 169 starting-hand classes against a random hand
+ *    (used to rank hands and build "top X%" ranges).
+ * 2. A 169x169 all-in equity matrix and exact combo-compatibility counts.
+ * 3. The heads-up push/fold Nash equilibrium (small blind shoves or folds,
+ *    big blind calls or folds) for effective stacks of 1-25 big blinds,
+ *    solved by fictitious play. Output: for each class, the largest stack at
+ *    which it is a shove (SB) and a call (BB).
+ */
+import { writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { scoreHand } from '@poker/engine';
+import { CLASSES, COMBO_COUNT, combosOf } from '../src/analysis/classes';
+
+let seed = 0x9e3779b9;
+const rnd = () => {
+  seed ^= seed << 13;
+  seed ^= seed >>> 17;
+  seed ^= seed << 5;
+  return (seed >>> 0) / 4294967296;
+};
+
+const N = CLASSES.length;
+const combos = CLASSES.map(combosOf);
+
+function equity(a: number[], b: number[] | null, samples: number): number {
+  let win = 0;
+  const used = new Uint8Array(52);
+  for (let s = 0; s < samples; s++) {
+    used.fill(0);
+    used[a[0]] = used[a[1]] = 1;
+    let opp = b;
+    if (!opp) {
+      const o: number[] = [];
+      while (o.length < 2) {
+        const c = Math.floor(rnd() * 52);
+        if (!used[c]) {
+          used[c] = 1;
+          o.push(c);
+        }
+      }
+      opp = o;
+    } else used[opp[0]] = used[opp[1]] = 1;
+    const board: number[] = [];
+    while (board.length < 5) {
+      const c = Math.floor(rnd() * 52);
+      if (!used[c]) {
+        used[c] = 1;
+        board.push(c);
+      }
+    }
+    const x = scoreHand([a[0], a[1], ...board]);
+    const y = scoreHand([opp[0], opp[1], ...board]);
+    win += x > y ? 1 : x === y ? 0.5 : 0;
+  }
+  return win / samples;
+}
+
+console.time('vs random');
+const vsRandom = CLASSES.map((_, i) => {
+  let t = 0;
+  for (const c of combos[i]) t += equity(c, null, Math.ceil(24000 / combos[i].length));
+  return t / combos[i].length;
+});
+console.timeEnd('vs random');
+
+console.time('matrix');
+const eq = Array.from({ length: N }, () => new Float64Array(N));
+const pairs = Array.from({ length: N }, () => new Float64Array(N)); // compatible combo pairs
+const SAMPLES = 1200;
+for (let i = 0; i < N; i++) {
+  for (let j = i; j < N; j++) {
+    let total = 0;
+    let count = 0;
+    for (const a of combos[i]) for (const b of combos[j]) if (a[0] !== b[0] && a[0] !== b[1] && a[1] !== b[0] && a[1] !== b[1]) count++;
+    pairs[i][j] = pairs[j][i] = count;
+    if (count === 0) continue;
+    for (let s = 0; s < SAMPLES; s++) {
+      let a: number[];
+      let b: number[];
+      do {
+        a = combos[i][Math.floor(rnd() * combos[i].length)];
+        b = combos[j][Math.floor(rnd() * combos[j].length)];
+      } while (a[0] === b[0] || a[0] === b[1] || a[1] === b[0] || a[1] === b[1]);
+      total += equity(a, b, 1);
+    }
+    eq[i][j] = total / SAMPLES;
+    eq[j][i] = 1 - eq[i][j];
+  }
+}
+console.timeEnd('matrix');
+
+/** Fictitious play for the heads-up shove/fold game at stack S (in big blinds). */
+function nash(S: number) {
+  const push = new Float64Array(N).fill(1);
+  const call = new Float64Array(N).fill(0.5);
+  const ITER = 800;
+  for (let it = 1; it <= ITER; it++) {
+    // SB best response to BB's calling strategy
+    const brPush = new Float64Array(N);
+    for (let i = 0; i < N; i++) {
+      let ev = 0;
+      let w = 0;
+      for (let j = 0; j < N; j++) {
+        const n = pairs[i][j];
+        if (!n) continue;
+        ev += n * (call[j] * (eq[i][j] * 2 * S - S) + (1 - call[j]) * 1);
+        w += n;
+      }
+      brPush[i] = ev / w > -0.5 ? 1 : 0;
+    }
+    // BB best response to SB's pushing strategy
+    const brCall = new Float64Array(N);
+    for (let j = 0; j < N; j++) {
+      let ev = 0;
+      let w = 0;
+      for (let i = 0; i < N; i++) {
+        const n = pairs[i][j] * push[i];
+        if (!n) continue;
+        ev += n * (eq[j][i] * 2 * S - S);
+        w += n;
+      }
+      brCall[j] = w > 0 && ev / w > -1 ? 1 : 0;
+    }
+    const k = 1 / (it + 1);
+    for (let x = 0; x < N; x++) {
+      push[x] += (brPush[x] - push[x]) * k;
+      call[x] += (brCall[x] - call[x]) * k;
+    }
+  }
+  return { push, call };
+}
+
+console.time('nash');
+const stacks: number[] = [];
+for (let s = 1; s <= 25; s += 0.5) stacks.push(s);
+const pushMax = new Array(N).fill(0);
+const callMax = new Array(N).fill(0);
+const pushPct: Record<string, number> = {};
+for (const S of stacks) {
+  const { push, call } = nash(S);
+  let pct = 0;
+  for (let i = 0; i < N; i++) {
+    if (push[i] >= 0.5) {
+      pushMax[i] = S;
+      pct += COMBO_COUNT(CLASSES[i]);
+    }
+    if (call[i] >= 0.5) callMax[i] = S;
+  }
+  pushPct[S] = Math.round((pct / 1326) * 1000) / 10;
+}
+console.timeEnd('nash');
+
+const ranking = CLASSES.map((c, i) => [c, vsRandom[i]] as const).sort((a, b) => b[1] - a[1]);
+const out = {
+  note: 'Generated by scripts/precompute-preflop.ts. Heads-up push/fold Nash (SB vs BB, no ante); thresholds are the largest stack in big blinds (up to 25) at which the class shoves/calls.',
+  ranking: ranking.map(([c, e]) => ({ hand: c, equityVsRandom: Math.round(e * 10000) / 10000 })),
+  pushMax: Object.fromEntries(CLASSES.map((c, i) => [c, pushMax[i]])),
+  callMax: Object.fromEntries(CLASSES.map((c, i) => [c, callMax[i]])),
+  pushPercentByStack: pushPct,
+};
+const here = path.dirname(fileURLToPath(import.meta.url));
+writeFileSync(path.join(here, '../src/analysis/preflop-data.json'), JSON.stringify(out, null, 1));
+console.log('AA', out.pushMax.AA, 'K7o push', out.pushMax.K7o, 'push% @10bb', pushPct[10], '@20bb', pushPct[20]);
+console.log('top 10:', ranking.slice(0, 10).map((r) => r[0]).join(' '));

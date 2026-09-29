@@ -76,6 +76,19 @@ What the tests prove:
    3. Download the CSV.
 8. **Polish & deploy.** Close a player's browser mid-hand: they are shown offline, auto-acted, and back on reconnect. Deploy with [docs/DEPLOY.md](docs/DEPLOY.md).
 
+9. **Analysis & stats.**
+   1. Open any finished hand in **Hand history** and tap **Analyse**. You get pot odds, equity against the likely ranges, preflop chart or push/fold advice, and a verdict for each of your decisions.
+   2. **My stats** shows VPIP, PFR, 3-bet, showdown %, bb/100 and results by position.
+
+## Hand analysis: what it is (and isn't)
+
+* **Tier A, every decision.** Pot odds, required equity, minimum defense frequency, and the EV of calling. Also your Monte Carlo equity against ranges *estimated from the opponents' actions*. Their real cards are never used, so analysis can't leak mucked hands.
+* **Tier B, preflop.**
+  * An approximate open-raising chart for when the action is folded to you.
+  * A genuine heads-up push/fold equilibrium for short-stacked blind-vs-blind spots, precomputed by `apps/server/scripts/precompute-preflop.ts` (it matches published charts; e.g. the SB shoves about 58% of hands at 10bb).
+* **Only after the hand.** Hands are stored only once finished, so live analysis is impossible by design.
+* **Limits.** Multiway spots have no exact GTO solution, and postflop "GTO" would need a full solver. The page says which tier produced each answer.
+
 ## Fairness notes
 
 * **Shuffle.** The server seed comes from Node's cryptographic RNG. The deck is shuffled with Fisher–Yates, driven by `HMAC-SHA256(serverSeed, clientSeeds:handId:counter)` with rejection sampling (no modulo bias).

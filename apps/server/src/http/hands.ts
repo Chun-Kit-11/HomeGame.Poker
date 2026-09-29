@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { requireUser } from '../auth/routes';
 import { db } from '../db';
+import { AnalysisError, type AnalysisInput, analyzeHand } from '../analysis/analyze';
+import { RateLimiter } from '../ratelimit';
+
+const analysisLimiter = new RateLimiter(10, 0.2);
 
 const PAGE = 30;
 
@@ -56,6 +60,44 @@ export function handsRouter(): Router {
       return;
     }
     await sendHand(hand.id, req.user!.id, res);
+  });
+
+  /**
+   * Post-hand analysis of MY decisions. Hands are only stored once finished,
+   * so a hand still being played can never be analysed.
+   */
+  r.get('/:id/analysis', requireUser, async (req, res) => {
+    const me = req.user!.id;
+    if (!analysisLimiter.take(me)) {
+      res.status(429).json({ error: 'Please wait a moment before analysing another hand' });
+      return;
+    }
+    const hand = await db().hand.findUnique({
+      where: { id: String(req.params.id) },
+      include: { players: { include: { user: { select: { username: true } } } } },
+    });
+    const mine = hand?.players.find((p) => p.userId === me);
+    if (!hand || !mine) {
+      res.status(404).json({ error: 'You did not play this hand' });
+      return;
+    }
+    const history = hand.history as unknown as { config: AnalysisInput['config']; events: AnalysisInput['events'] };
+    try {
+      const decisions = analyzeHand({
+        config: history.config,
+        events: history.events,
+        heroSeat: mine.seat,
+        heroCards: mine.holeCards as number[],
+        names: Object.fromEntries(hand.players.map((p) => [p.seat, p.user.username])),
+      });
+      res.json({ decisions });
+    } catch (err) {
+      if (err instanceof AnalysisError) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      throw err;
+    }
   });
 
   /** Full hand history. Visible to members of the room; unshown hole cards stay private. */
