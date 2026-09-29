@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ClientPayload, TableView } from '@poker/shared';
 import { useAmount } from '@/lib/display';
 import type { Emit } from '@/lib/useTable';
+import { BetAmountInput } from './BetAmountInput';
 import { useCountdown } from './TimerRing';
 
 /**
@@ -153,16 +154,8 @@ export function ActionBar({ view, emit, skew, onError }: { view: TableView; emit
             <button className="icon-btn h-9 w-9" onClick={() => setAmount((a) => Math.min(legal.maxTo, a + (view.room.bigBlind || 1)))}>
               +
             </button>
-            <input
-              className="input h-9 w-24 text-center font-bold tabular"
-              type="number"
-              inputMode="numeric"
-              min={legal.minTo}
-              max={legal.maxTo}
-              value={amount}
-              onChange={(e) => setAmount(Math.floor(Number(e.target.value)))}
-            />
           </div>
+          <BetAmountInput className="mx-auto w-full max-w-[220px]" size="sm" amount={amount} setAmount={setAmount} min={legal.minTo} max={legal.maxTo} bigBlind={view.room.bigBlind} />
           <div className="flex justify-between text-[11px] text-white/40">
             <span>Min {chips(legal.minTo)}</span>
             <span>Max {chips(legal.maxTo)}</span>

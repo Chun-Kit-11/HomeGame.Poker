@@ -7,16 +7,26 @@ export type ThemeName = 'onyx' | 'sapphire' | 'emerald' | 'burgundy' | 'graphite
 
 export interface TableTheme {
   label: string;
+  /** One-line description for the picker */
+  tagline: string;
   /** Felt gradient */
   felt: string;
+  /** Pattern printed on the felt (CSS background layers) */
+  pattern: string;
+  patternSize: string;
+  patternOpacity: number;
   /** Rail (outer ring) gradient */
   rail: string;
-  /** Thin line printed on the felt */
+  /** Decoration on the rail */
+  railDetail: 'studs' | 'chrome' | 'stitch' | 'plain';
+  railDetailColor: string;
+  /** Betting line printed on the felt */
   line: string;
+  lineStyle: 'solid' | 'dashed' | 'double';
+  /** Crest emblem colour */
+  crest: string;
   /** Page backdrop behind the table */
   backdrop: string;
-  /** Swatch for the picker */
-  swatch: string;
   /** Seat plate background (with alpha) */
   plate: string;
   /** Stack amount colour */
@@ -26,53 +36,97 @@ export interface TableTheme {
 export const THEMES: Record<ThemeName, TableTheme> = {
   onyx: {
     label: 'Onyx & Gold',
-    felt: 'radial-gradient(ellipse at 50% 40%, #2b2a27 0%, #1a1917 42%, #0e0d0c 78%, #070706 100%)',
+    tagline: 'Art-deco black with a studded gold rail',
+    felt: 'radial-gradient(ellipse at 50% 40%, #2d2b27 0%, #1a1917 42%, #0e0d0c 78%, #070706 100%)',
+    // Art-deco fans
+    pattern:
+      'radial-gradient(circle at 50% 100%, transparent 38%, rgba(227,193,115,0.9) 39%, rgba(227,193,115,0.9) 41%, transparent 42%, transparent 58%, rgba(227,193,115,0.9) 59%, rgba(227,193,115,0.9) 61%, transparent 62%)',
+    patternSize: '44px 22px',
+    patternOpacity: 0.07,
     rail: 'linear-gradient(180deg, #f6e3a8 0%, #d9b45e 18%, #a07a2c 45%, #6b4e17 70%, #3a2a0a 100%)',
-    line: 'rgba(227, 193, 115, 0.38)',
-    backdrop: 'radial-gradient(900px 650px at 50% 35%, rgba(227, 193, 115, 0.10), transparent 70%), radial-gradient(600px 400px at 100% 100%, rgba(184, 145, 63, 0.08), transparent 70%), #030303',
-    swatch: '#1a1917',
+    railDetail: 'studs',
+    railDetailColor: 'rgba(255, 244, 205, 0.85)',
+    line: 'rgba(227, 193, 115, 0.45)',
+    lineStyle: 'double',
+    crest: '#e3c173',
+    backdrop:
+      'radial-gradient(900px 650px at 50% 35%, rgba(227, 193, 115, 0.10), transparent 70%), radial-gradient(600px 400px at 100% 100%, rgba(184, 145, 63, 0.08), transparent 70%), #030303',
     plate: 'rgba(10, 9, 8, 0.92)',
     stack: '#e8c77a',
   },
   sapphire: {
-    label: 'Sapphire',
-    felt: 'radial-gradient(ellipse at 50% 42%, #3559b8 0%, #26449a 38%, #1b3278 72%, #13245a 100%)',
-    rail: 'linear-gradient(180deg, #1c2542 0%, #0d1326 55%, #070b17 100%)',
-    line: 'rgba(160, 190, 255, 0.18)',
-    backdrop: 'radial-gradient(900px 700px at 50% 30%, rgba(46, 84, 180, 0.35), transparent 70%), radial-gradient(700px 500px at 0% 100%, rgba(120, 60, 160, 0.18), transparent 70%), #060913',
-    swatch: '#26449a',
+    label: 'Royal Sapphire',
+    tagline: 'Deep blue with a diamond lattice and chrome rail',
+    felt: 'radial-gradient(ellipse at 50% 42%, #3a61c4 0%, #26449a 38%, #1b3278 72%, #12225a 100%)',
+    pattern:
+      'repeating-linear-gradient(45deg, rgba(255,255,255,0.9) 0 1px, transparent 1px 22px), repeating-linear-gradient(-45deg, rgba(255,255,255,0.9) 0 1px, transparent 1px 22px)',
+    patternSize: 'auto',
+    patternOpacity: 0.06,
+    rail: 'linear-gradient(180deg, #f4f6fb 0%, #b8c0cf 20%, #6b7485 50%, #3b4150 75%, #1c2029 100%)',
+    railDetail: 'chrome',
+    railDetailColor: 'rgba(255, 255, 255, 0.7)',
+    line: 'rgba(190, 210, 255, 0.35)',
+    lineStyle: 'solid',
+    crest: '#c9d7ff',
+    backdrop:
+      'radial-gradient(900px 700px at 50% 30%, rgba(46, 84, 180, 0.35), transparent 70%), radial-gradient(700px 500px at 0% 100%, rgba(120, 60, 160, 0.18), transparent 70%), #060913',
     plate: 'rgba(11, 18, 36, 0.9)',
     stack: '#a9c3ff',
   },
   emerald: {
-    label: 'Emerald',
-    felt: 'radial-gradient(ellipse at 50% 42%, #2a8a62 0%, #1b6e4d 38%, #115236 72%, #0a3625 100%)',
-    rail: 'linear-gradient(180deg, #3d2b1d 0%, #23170f 55%, #150e08 100%)',
-    line: 'rgba(227, 193, 115, 0.16)',
+    label: 'Classic Emerald',
+    tagline: 'Casino green, pinstripes and a stitched leather rail',
+    felt: 'radial-gradient(ellipse at 50% 42%, #2e9368 0%, #1b6e4d 38%, #115236 72%, #0a3625 100%)',
+    pattern: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.9) 0 1px, transparent 1px 9px)',
+    patternSize: 'auto',
+    patternOpacity: 0.035,
+    rail: 'linear-gradient(180deg, #6b4a31 0%, #4a321f 30%, #2c1d12 65%, #150e08 100%)',
+    railDetail: 'stitch',
+    railDetailColor: 'rgba(242, 214, 160, 0.65)',
+    line: 'rgba(242, 214, 160, 0.35)',
+    lineStyle: 'dashed',
+    crest: '#f2d6a0',
     backdrop: 'radial-gradient(900px 700px at 50% 30%, rgba(16, 185, 129, 0.16), transparent 70%), #07090a',
-    swatch: '#1b6e4d',
     plate: 'rgba(7, 20, 15, 0.9)',
     stack: '#9be3c2',
   },
   burgundy: {
-    label: 'Burgundy',
-    felt: 'radial-gradient(ellipse at 50% 42%, #8a2a3a 0%, #6d1f2d 40%, #521623 75%, #360d17 100%)',
-    rail: 'linear-gradient(180deg, #2a1a14 0%, #170e0a 60%, #0c0705 100%)',
-    line: 'rgba(227, 193, 115, 0.18)',
-    backdrop: 'radial-gradient(900px 700px at 50% 30%, rgba(160, 40, 60, 0.22), transparent 70%), #0a0607',
-    swatch: '#6d1f2d',
+    label: 'Crimson Velvet',
+    tagline: 'Velvet red with damask and a polished gold rail',
+    felt: 'radial-gradient(ellipse at 50% 42%, #922d3e 0%, #6d1f2d 40%, #521623 75%, #360d17 100%)',
+    // Damask-like scattered diamonds and dots
+    pattern:
+      'radial-gradient(circle at 25% 25%, rgba(255,215,170,0.9) 0 2px, transparent 3px), radial-gradient(circle at 75% 75%, rgba(255,215,170,0.9) 0 2px, transparent 3px), linear-gradient(45deg, transparent 46%, rgba(255,215,170,0.9) 47% 53%, transparent 54%), linear-gradient(-45deg, transparent 46%, rgba(255,215,170,0.9) 47% 53%, transparent 54%)',
+    patternSize: '34px 34px',
+    patternOpacity: 0.06,
+    rail: 'linear-gradient(180deg, #f3d892 0%, #c79a3e 25%, #7d5a1c 60%, #3b2a0c 100%)',
+    railDetail: 'plain',
+    railDetailColor: 'rgba(255, 235, 190, 0.7)',
+    line: 'rgba(255, 215, 170, 0.4)',
+    lineStyle: 'solid',
+    crest: '#f3d892',
+    backdrop: 'radial-gradient(900px 700px at 50% 30%, rgba(160, 40, 60, 0.25), transparent 70%), #0a0607',
     plate: 'rgba(24, 8, 12, 0.9)',
     stack: '#f3c4cc',
   },
   graphite: {
-    label: 'Graphite',
-    felt: 'radial-gradient(ellipse at 50% 42%, #3b4148 0%, #2c3137 40%, #1f2327 75%, #15181b 100%)',
-    rail: 'linear-gradient(180deg, #202428 0%, #111316 60%, #08090a 100%)',
-    line: 'rgba(255, 255, 255, 0.10)',
-    backdrop: 'radial-gradient(900px 700px at 50% 30%, rgba(120, 130, 140, 0.16), transparent 70%), #070809',
-    swatch: '#2c3137',
+    label: 'Carbon',
+    tagline: 'Carbon-fibre weave with a cyan light line',
+    felt: 'radial-gradient(ellipse at 50% 42%, #3b4148 0%, #2a2f35 40%, #1c2024 75%, #111315 100%)',
+    // Carbon-fibre weave
+    pattern:
+      'linear-gradient(45deg, rgba(255,255,255,0.9) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.9) 75%), linear-gradient(45deg, rgba(255,255,255,0.9) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.9) 75%)',
+    patternSize: '8px 8px',
+    patternOpacity: 0.045,
+    rail: 'linear-gradient(180deg, #3a3f46 0%, #1d2126 50%, #0a0b0d 100%)',
+    railDetail: 'chrome',
+    railDetailColor: 'rgba(34, 211, 238, 0.8)',
+    line: 'rgba(34, 211, 238, 0.45)',
+    lineStyle: 'solid',
+    crest: '#67e8f9',
+    backdrop: 'radial-gradient(900px 700px at 50% 30%, rgba(34, 211, 238, 0.10), transparent 70%), #050607',
     plate: 'rgba(12, 13, 15, 0.9)',
-    stack: '#d6dbe1',
+    stack: '#a5f3fc',
   },
 };
 

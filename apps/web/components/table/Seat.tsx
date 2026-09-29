@@ -7,7 +7,7 @@ import { PlayingCard } from './Card';
 import { TimerRing, timerColor, useTimer } from './TimerRing';
 
 function statusOf(seat: SeatView, fmt: (n: number) => string) {
-  if (seat.won > 0) return { text: `+${fmt(seat.won)}`, cls: 'text-gold font-bold' };
+  if (seat.won > 0) return { text: `+${fmt(seat.won)}${seat.handDescription ? ` · ${seat.handDescription}` : ''}`, cls: 'text-gold font-bold' };
   if (seat.handDescription && seat.cards !== 'hidden') return { text: seat.handDescription, cls: 'text-white/85' };
   if (seat.lastAction) return { text: seat.lastAction, cls: seat.lastAction === 'Fold' || seat.lastAction === 'Muck' ? 'text-white/40' : 'text-emerald-300' };
   if (seat.status === 'sittingOut') return { text: 'Away', cls: 'text-white/40' };
@@ -70,6 +70,7 @@ export function Seat({
     <button type="button" onClick={onClick} className={`group relative flex w-[108px] flex-col items-center ${away && !seat.inHand ? 'opacity-55' : ''}`}>
       <div className="relative">
         <div className="relative">
+          {winner && <div className="winner-halo" />}
           <Avatar name={seat.username} size={58} ring={isTurn ? 'ring-[3px] ring-emerald-300' : winner ? 'ring-[3px] ring-gold winner-glow' : isMe ? 'ring-[3px] ring-gold/70' : 'ring-[3px] ring-black/80'} />
           {isTurn && deadline && <TimerRing deadline={deadline} skew={skew} bank={usingBank} />}
           {isTurn && timer.secs !== null && (
@@ -97,9 +98,10 @@ export function Seat({
       </div>
       <div
         className={`relative z-10 -mt-3 w-full rounded-xl px-2 pb-1.5 pt-1 text-center shadow-[0_10px_24px_-8px_rgba(0,0,0,0.9)] ring-1 ring-inset backdrop-blur-md ${
-          isTurn ? 'bg-emerald-950/90 ring-emerald-300/60' : 'bg-[var(--plate)] ring-white/10'
+          isTurn ? 'bg-emerald-950/90 ring-emerald-300/60' : winner ? 'winner-plate ring-gold/60' : 'bg-[var(--plate)] ring-white/10'
         }`}
       >
+        {winner && <WinnerTag />}
         <div className="truncate text-[12px] font-medium leading-tight text-white/90">{seat.username}</div>
         <div className="text-[15px] font-bold leading-tight tabular text-[var(--stack)]">
           {seat.status === 'pending' ? <span className="text-[11px] font-medium text-white/50">Pending…</span> : seat.allIn ? <span className="text-gold">ALL-IN</span> : fmt(seat.stack)}
@@ -150,10 +152,11 @@ export function HeroSeat({
       </div>
       <div className="relative -mt-3 flex items-center">
         <div
-          className={`z-10 w-[150px] rounded-xl px-3 pb-1.5 pt-1 text-center shadow-[0_12px_30px_-10px_rgba(0,0,0,0.9)] ring-1 ring-inset backdrop-blur-md ${
-            isTurn ? 'bg-emerald-950/90 ring-emerald-300/60' : 'bg-[var(--plate)] ring-white/10'
+          className={`relative z-10 w-[150px] rounded-xl px-3 pb-1.5 pt-1 text-center shadow-[0_12px_30px_-10px_rgba(0,0,0,0.9)] ring-1 ring-inset backdrop-blur-md ${
+            isTurn ? 'bg-emerald-950/90 ring-emerald-300/60' : seat.won > 0 ? 'winner-plate ring-gold/60' : 'bg-[var(--plate)] ring-white/10'
           }`}
         >
+          {seat.won > 0 && <WinnerTag />}
           <div className={`h-4 truncate text-[11px] leading-4 ${status?.cls ?? 'text-white/50'}`}>{status?.text ?? seat.username}</div>
           <div className="font-display text-[22px] font-extrabold leading-tight tabular text-[var(--stack)]">{seat.allIn ? <span className="text-gold">ALL-IN</span> : fmt(seat.stack)}</div>
           {isTurn && <TimeBar frac={timer.frac} bank={usingBank} />}
@@ -169,6 +172,15 @@ export function HeroSeat({
         )}
       </div>
     </button>
+  );
+}
+
+/** Small "WINNER" ribbon on top of a lit-up name plate. */
+function WinnerTag() {
+  return (
+    <span className="winner-tag absolute -top-2.5 left-1/2 z-20 whitespace-nowrap rounded-full bg-gradient-to-b from-[#fbe7a8] to-[#c9a14b] px-2 text-[9px] font-extrabold uppercase leading-[15px] tracking-[0.14em] text-black shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+      Winner
+    </span>
   );
 }
 

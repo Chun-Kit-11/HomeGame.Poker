@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ClientPayload, TableView } from '@poker/shared';
 import { useAmount } from '@/lib/display';
 import type { Emit } from '@/lib/useTable';
+import { BetAmountInput } from './BetAmountInput';
 import { useCountdown } from './TimerRing';
 
 type Action = ClientPayload<'player:action'>['action'];
@@ -193,14 +194,8 @@ export function MobileActions({ view, emit, skew, onError, onStart }: { view: Ta
               +
             </button>
           </div>
-          <div className="flex gap-2">
-            <input
-              className="input h-12 flex-1 text-center text-lg font-bold tabular"
-              type="number"
-              inputMode="numeric"
-              value={amount}
-              onChange={(e) => setAmount(Math.floor(Number(e.target.value)))}
-            />
+          <div className="flex items-start gap-2">
+            <BetAmountInput className="flex-1" amount={amount} setAmount={setAmount} min={legal.minTo} max={legal.maxTo} bigBlind={view.room.bigBlind} />
             <button
               className="btn-primary h-12 flex-1 flex-col gap-0"
               disabled={busy || amount < legal.minTo || amount > legal.maxTo}
@@ -213,7 +208,7 @@ export function MobileActions({ view, emit, skew, onError, onStart }: { view: Ta
         </div>
       )}
 
-      {presets.length > 0 && (
+      {presets.length > 0 && !custom && (
         <div className={rightCol}>
           {presets.map((p) => (
             <button

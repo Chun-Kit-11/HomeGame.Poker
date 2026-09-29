@@ -157,6 +157,52 @@ select.input {
 .winner-glow {
   animation: winner-glow 1.2s ease-in-out infinite;
 }
+/* The winner's seat lights up instead of a message in the middle of the table */
+@keyframes winner-plate {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1.5px rgba(246, 227, 168, 0.95), 0 0 16px 2px rgba(227, 193, 115, 0.55), 0 10px 24px -8px rgba(0, 0, 0, 0.9);
+  }
+  50% {
+    box-shadow: 0 0 0 1.5px rgba(255, 244, 205, 1), 0 0 30px 8px rgba(227, 193, 115, 0.8), 0 10px 24px -8px rgba(0, 0, 0, 0.9);
+  }
+}
+.winner-plate {
+  background: linear-gradient(180deg, rgba(92, 70, 22, 0.95), rgba(28, 21, 7, 0.95)) !important;
+  animation: winner-plate 1.2s ease-in-out infinite;
+}
+@keyframes winner-halo {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+.winner-halo {
+  pointer-events: none;
+  position: absolute;
+  inset: -22px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(252, 211, 77, 0.55) 0%, rgba(227, 193, 115, 0.25) 40%, transparent 70%);
+  animation: winner-halo 1.2s ease-in-out infinite;
+}
+@keyframes winner-tag {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+.winner-tag {
+  animation: winner-tag 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
 @keyframes slide-up {
   from {
     opacity: 0;

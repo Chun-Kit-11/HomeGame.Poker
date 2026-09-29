@@ -5,6 +5,7 @@ import { useAmount, useTheme } from '@/lib/display';
 import type { Reaction } from '@/lib/useTable';
 import { Chip, PlayingCard } from './Card';
 import { EmptySeat, HeroSeat, Seat } from './Seat';
+import { TableSurface } from './TableSurface';
 import { useCountdown } from './TimerRing';
 
 type Pt = { x: number; y: number };
@@ -118,18 +119,13 @@ export function Table({
   return (
     <div ref={ref} className="relative grid h-full w-full place-items-center">
       <div className="relative" style={{ width: w, height: h }}>
-        {/* Rail + felt: a stadium (pill) shape */}
-        <div
-          className={`absolute rounded-full p-[2.2%] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.12)] ${
-            portrait ? 'inset-x-[5%] bottom-[3%] top-[2%]' : 'inset-x-[6%] inset-y-[9%]'
-          }`}
-          style={{ background: theme.rail }}
-        >
-          <div className="relative h-full w-full overflow-hidden rounded-full shadow-[inset_0_0_70px_rgba(0,0,0,0.6),inset_0_0_0_2px_rgba(0,0,0,0.4)]" style={{ background: theme.felt }}>
-            <div className="absolute inset-[5%] rounded-full border-2" style={{ borderColor: theme.line }} />
-            <div className="absolute inset-0 opacity-[0.07] mix-blend-overlay [background-image:radial-gradient(rgba(255,255,255,0.9)_1px,transparent_1px)] [background-size:3px_3px]" />
-          </div>
-        </div>
+        {/* Rail + felt: a stadium (pill) shape in the chosen design */}
+        <TableSurface
+          theme={theme}
+          pad={Math.round(w * 0.022)}
+          crestPx={Math.round(Math.min(w * (portrait ? 0.52 : 0.28), h * 0.4))}
+          className={`absolute ${portrait ? 'inset-x-[5%] bottom-[3%] top-[2%]' : 'inset-x-[6%] inset-y-[9%]'}`}
+        />
 
         {/* Printed on the felt */}
         <FeltInfo view={view} skew={skew} portrait={portrait} compact={!portrait && h < 440} scale={portrait ? 1 : Math.max(0.75, Math.min(1, h / 480))} />
@@ -182,7 +178,7 @@ export function Table({
               )}
             </div>
           )}
-          {hand?.phase === 'complete' && <Results view={view} fmt={fmt} portrait={portrait} />}
+          {hand?.phase === 'complete' && <Results view={view} />}
         </div>
 
         {/* Seats, bets and the dealer button */}
@@ -351,38 +347,13 @@ function FeltInfo({ view, skew, portrait, scale, compact: oneLine }: { view: Tab
   );
 }
 
-/** Winners, one line per pot (split pots grouped): "A & B split 8 BB · Full House". */
-function Results({ view, fmt, portrait }: { view: TableView; fmt: (n: number) => string; portrait: boolean }) {
+/** After a hand: a link to verify the shuffle. Winners light up on their own seats. */
+function Results({ view }: { view: TableView }) {
   const hand = view.hand!;
-  const groups = new Map<string, { names: string[]; amount: number; description: string; run: number }>();
-  for (const r of hand.results) {
-    if (!r.description) continue;
-    const key = `${r.pot}-${r.run}`;
-    const g = groups.get(key) ?? { names: [], amount: 0, description: r.description, run: r.run };
-    g.names.push(view.seats[r.seat]?.username ?? '?');
-    g.amount += r.amount;
-    groups.set(key, g);
-  }
-  const lines = [...groups.values()];
-  const join = (n: string[]) => (n.length <= 1 ? n[0] : `${n.slice(0, -1).join(', ')} & ${n[n.length - 1]}`);
+  if (!hand.fair) return null;
   return (
-    <>
-      {lines.length > 0 && (
-        <div className={`rounded-xl bg-black/60 px-3 py-1.5 text-center font-medium text-gold ring-1 ring-inset ring-gold/25 backdrop-blur ${portrait ? 'max-w-[56vw] text-[11px]' : 'max-w-[40vw] text-[11px]'}`}>
-          {lines.slice(0, 2).map((g, i) => (
-            <div key={i} className="truncate">
-              {join(g.names)} {g.names.length > 1 ? 'split' : 'wins'} {fmt(g.amount)} · {g.description}
-              {hand.board2 ? ` (run ${g.run})` : ''}
-            </div>
-          ))}
-          {lines.length > 2 && <div className="text-white/50">+{lines.length - 2} more pots</div>}
-        </div>
-      )}
-      {hand.fair && (
-        <a className="text-[10px] text-white/40 hover:text-gold" href={`/verify?room=${view.room.code}&n=${hand.handNo}`} target="_blank" rel="noreferrer">
-          Hand #{hand.handNo} · verify shuffle ↗
-        </a>
-      )}
-    </>
+    <a className="text-[10px] text-white/40 hover:text-gold" href={`/verify?room=${view.room.code}&n=${hand.handNo}`} target="_blank" rel="noreferrer">
+      Hand #{hand.handNo} · verify shuffle ↗
+    </a>
   );
 }

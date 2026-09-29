@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { THEMES, type ThemeName, useDisplay } from '@/lib/display';
 import { getCustomSeed, setCustomSeed } from '@/lib/seed';
 import { isMuted, setMuted } from '@/lib/sounds';
+import { TableSurface } from './TableSurface';
 
 /** Per-device preferences. */
 export function SettingsPanel({ onMutedChange }: { onMutedChange?: (m: boolean) => void }) {
@@ -17,14 +18,22 @@ export function SettingsPanel({ onMutedChange }: { onMutedChange?: (m: boolean) 
   return (
     <div className="space-y-6 p-4 text-sm">
       <section>
-        <h3 className="eyebrow mb-2">Table colour</h3>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        <h3 className="eyebrow mb-2">Table design</h3>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {(Object.keys(THEMES) as ThemeName[]).map((k) => (
-            <button key={k} onClick={() => setTheme(k)} className={`flex flex-col items-center gap-1.5 rounded-xl p-2 ring-1 ring-inset ${theme === k ? 'bg-gold/10 ring-gold/60' : 'bg-black/25 ring-white/10'}`}>
-              <span className="h-8 w-12 rounded-full p-[3px]" style={{ background: THEMES[k].rail }}>
-                <span className="block h-full w-full rounded-full" style={{ background: THEMES[k].felt }} />
+            <button
+              key={k}
+              onClick={() => setTheme(k)}
+              aria-pressed={theme === k}
+              className={`flex items-center gap-3 rounded-2xl p-2.5 text-left ring-1 ring-inset transition ${theme === k ? 'bg-gold/10 ring-gold/60' : 'bg-black/25 ring-white/10 hover:ring-white/25'}`}
+            >
+              <span className="relative block h-[52px] w-[92px] shrink-0">
+                <TableSurface theme={THEMES[k]} pad={4} crestPx={34} className="absolute inset-0" />
               </span>
-              <span className={`text-[11px] ${theme === k ? 'text-gold' : 'text-white/60'}`}>{THEMES[k].label}</span>
+              <span className="min-w-0">
+                <span className={`block text-[13px] font-semibold ${theme === k ? 'text-gold' : 'text-white/85'}`}>{THEMES[k].label}</span>
+                <span className="block text-[11px] leading-snug text-white/45">{THEMES[k].tagline}</span>
+              </span>
             </button>
           ))}
         </div>
