@@ -17,18 +17,24 @@ export function PlayingCard({
   dim = false,
   highlight = false,
   className = '',
+  px,
 }: {
   card: number | null;
   size?: keyof typeof SIZES;
   dim?: boolean;
   highlight?: boolean;
   className?: string;
+  /** Exact card width in pixels (overrides size; everything scales with it) */
+  px?: number;
 }) {
   const s = SIZES[size];
+  const style = px ? { width: px, height: Math.round(px * 1.4), borderRadius: Math.max(4, px * 0.14), fontSize: px * 0.46 } : undefined;
+  const scaled = px !== undefined;
   if (card === null) {
     return (
       <div
-        className={`${s.box} deal-in relative overflow-hidden bg-[#5b1220] shadow-[0_4px_12px_rgba(0,0,0,0.5)] ring-1 ring-black/40 ${className}`}
+        style={style}
+        className={`${scaled ? '' : s.box} deal-in relative overflow-hidden bg-[#5b1220] shadow-[0_4px_12px_rgba(0,0,0,0.5)] ring-1 ring-black/40 ${className}`}
         aria-label="face-down card"
       >
         <div className="absolute inset-[3px] rounded-[inherit] bg-[repeating-linear-gradient(45deg,rgba(227,193,115,0.18)_0_2px,transparent_2px_6px),repeating-linear-gradient(-45deg,rgba(227,193,115,0.18)_0_2px,transparent_2px_6px)] ring-1 ring-[#e3c173]/40" />
@@ -40,10 +46,17 @@ export function PlayingCard({
   const suit = card & 3;
   return (
     <div
-      className={`${s.box} deal-in relative select-none overflow-hidden bg-gradient-to-b from-white to-[#eceae4] font-display font-extrabold leading-none shadow-[0_4px_14px_rgba(0,0,0,0.45)] ${SUIT_COLORS[suit]} ${dim ? 'opacity-40' : ''} ${highlight ? 'ring-2 ring-gold shadow-[0_0_18px_rgba(227,193,115,0.6)]' : 'ring-1 ring-black/10'} ${className}`}
+      style={style}
+      className={`${scaled ? '' : s.box} deal-in relative select-none overflow-hidden bg-gradient-to-b from-white to-[#eceae4] font-display font-extrabold leading-none shadow-[0_4px_14px_rgba(0,0,0,0.45)] ${SUIT_COLORS[suit]} ${dim ? 'opacity-40' : ''} ${highlight ? 'ring-2 ring-gold shadow-[0_0_18px_rgba(227,193,115,0.6)]' : 'ring-1 ring-black/10'} ${className}`}
       aria-label={`${label}${SUITS[suit]}`}
     >
-      {s.corner ? (
+      {scaled ? (
+        <>
+          <span className="absolute left-[11%] top-[6%] text-[1em] tracking-tighter">{label}</span>
+          <span className="absolute left-[12%] top-[40%] text-[0.62em]">{SUITS[suit]}</span>
+          <span className="absolute bottom-[4%] right-[8%] text-[1.25em]">{SUITS[suit]}</span>
+        </>
+      ) : s.corner ? (
         <>
           <span className={`absolute left-[12%] top-[8%] ${s.rank} tracking-tighter`}>{label}</span>
           <span className={`absolute bottom-[6%] right-[10%] ${s.suit}`}>{SUITS[suit]}</span>

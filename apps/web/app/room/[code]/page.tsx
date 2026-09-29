@@ -9,7 +9,10 @@ import { PlayerMenu } from '@/components/table/PlayerMenu';
 import { SeatDialog } from '@/components/table/SeatDialog';
 import { StatsPanel } from '@/components/table/StatsPanel';
 import { Table } from '@/components/table/Table';
-import { Standings, TournamentBar } from '@/components/table/TournamentBar';
+import { MobileActions } from '@/components/table/MobileActions';
+import { SettingsPanel } from '@/components/table/SettingsPanel';
+import { Standings } from '@/components/table/TournamentBar';
+import { DisplayProvider, useDisplay, useTheme } from '@/lib/display';
 import { Chat as ChatIcon, ChevronLeft, Copy, Settings, Volume, VolumeOff } from '@/components/ui/Icons';
 import { Loading } from '@/components/ui/PageHeader';
 import { chips } from '@/lib/format';
@@ -17,12 +20,40 @@ import { isMuted, playSound, setMuted } from '@/lib/sounds';
 import { useMe } from '@/lib/useMe';
 import { useTable } from '@/lib/useTable';
 
-type Tab = 'chat' | 'stats' | 'host';
+type Tab = 'chat' | 'stats' | 'host' | 'settings';
 
 export default function RoomPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
   const me = useMe();
-  const { view, chat, reactions, connected, fatal, emit, skew } = useTable(code.toUpperCase());
+  const table = useTable(code.toUpperCase());
+  if (table.fatal) return <Fatal message={table.fatal} />;
+  if (!me || !table.view) return <Loading label="Joining the table" />;
+  return (
+    <DisplayProvider bigBlind={table.view.room.bigBlind} defaultUnit={table.view.room.gameMode === 'TOURNAMENT' ? 'bb' : 'chips'}>
+      <Room table={table} />
+    </DisplayProvider>
+  );
+}
+
+function Fatal({ message }: { message: string }) {
+  return (
+    <main className="grid min-h-dvh place-items-center p-6 text-center">
+      <div className="card-panel max-w-sm space-y-4">
+        <p className="text-lg font-semibold">{message}</p>
+        <Link className="btn-primary" href="/lobby">
+          Back to lobby
+        </Link>
+      </div>
+    </main>
+  );
+}
+
+function Room({ table }: { table: ReturnType<typeof useTable> }) {
+  const { chat, reactions, connected, emit, skew } = table;
+  const view = table.view!;
+  const theme = useTheme();
+  const { unit, setUnit } = useDisplay();
+  const [portrait, setPortrait] = useState(true);
   const [tab, setTab] = useState<Tab>('chat');
   const [panelOpen, setPanelOpen] = useState(false);
   const [seatDialog, setSeatDialog] = useState<number | null>(null);
@@ -41,36 +72,26 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   }, [toast]);
 
   // "Your turn" alert
-  const legal = view?.hand?.legal;
+  const legal = view.hand?.legal;
   useEffect(() => {
-    if (!legal || !view?.hand) return;
+    if (!legal || !view.hand) return;
     const key = `${view.hand.handNo}-${view.hand.street}-${view.hand.currentBet}`;
     if (key === lastTurn.current) return;
     lastTurn.current = key;
     playSound('yourTurn');
     if ('vibrate' in navigator) navigator.vibrate?.(120);
-  }, [legal, view?.hand]);
+  }, [legal, view.hand]);
 
   useEffect(() => {
     if (panelOpen && tab === 'chat') setUnread(0);
     else if (chat.length) setUnread((u) => u + 1);
   }, [chat.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (fatal) {
-    return (
-      <main className="grid min-h-dvh place-items-center p-6 text-center">
-        <div className="card-panel max-w-sm space-y-4">
-          <p className="text-lg font-semibold">{fatal}</p>
-          <Link className="btn-primary" href="/lobby">
-            Back to lobby
-          </Link>
-        </div>
-      </main>
-    );
-  }
-  if (!me || !view) return <Loading label="Joining the table" />;
-
   const mySeat = view.me.seat !== null ? view.seats[view.me.seat] : null;
+  const startGame = async () => {
+    const r = await emit('host:start', {});
+    if (!r.ok) setToast(r.error);
+  };
   const myCards = mySeat && Array.isArray(mySeat.cards) ? mySeat.cards : null;
   const inviteUrl = typeof window !== 'undefined' ? `${window.location.origin}/room/${view.room.code}` : '';
   const ended = view.room.status === 'ENDED';
@@ -78,7 +99,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   const panel = (
     <div className="flex h-full flex-col">
       <div className="m-2 flex rounded-xl bg-black/30 p-1 text-sm ring-1 ring-inset ring-white/[0.06]">
-        {(['chat', 'stats', ...(view.me.isHost ? ['host'] : [])] as Tab[]).map((t) => (
+        {(['chat', 'stats', ...(view.me.isHost ? ['host'] : []), 'settings'] as Tab[]).map((t) => (
           <button
             key={t}
             className={`flex-1 rounded-lg py-1.5 font-semibold capitalize transition ${tab === t ? 'bg-white/10 text-white shadow' : 'text-white/50 hover:text-white/80'}`}
@@ -93,12 +114,13 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         {tab === 'chat' && <Chat chat={chat} emit={emit} meId={view.me.userId} />}
         {tab === 'stats' && <StatsPanel view={view} />}
         {tab === 'host' && view.me.isHost && <HostPanel view={view} emit={emit} onError={setToast} />}
+        {tab === 'settings' && <SettingsPanel onMutedChange={setMutedState} />}
       </div>
     </div>
   );
 
   return (
-    <main className="flex h-dvh flex-col overflow-hidden lg:flex-row">
+    <main className="flex h-dvh flex-col overflow-hidden lg:flex-row" style={{ background: theme.backdrop }}>
       <div className="flex min-h-0 flex-1 flex-col">
         <header className="flex items-center gap-2 px-3 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))]">
           <Link href="/lobby" className="icon-btn" aria-label="Lobby">
@@ -127,8 +149,11 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             {view.room.code}
             <Copy className="h-3.5 w-3.5 text-white/50" />
           </button>
+          <button className="icon-btn w-11 font-display text-xs font-extrabold text-white/80" title="Show amounts in chips or big blinds" onClick={() => setUnit(unit === 'bb' ? 'chips' : 'bb')}>
+            {unit === 'bb' ? 'BB' : '123'}
+          </button>
           <button
-            className="icon-btn"
+            className="icon-btn hidden sm:inline-grid"
             title={muted ? 'Unmute' : 'Mute'}
             onClick={() => {
               setMuted(!muted);
@@ -143,7 +168,6 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           </button>
         </header>
 
-        {view.tournament && <TournamentBar view={view} skew={skew} />}
         {!connected && <Banner tone="red">Reconnecting… your seat is held.</Banner>}
         {view.room.status === 'PAUSED' && <Banner tone="amber">The host has paused the game</Banner>}
         {ended && (
@@ -155,7 +179,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           </Banner>
         )}
 
-        <div className="min-h-0 flex-1 px-1">
+        <div className="min-h-0 flex-1 px-1 pb-[env(safe-area-inset-bottom)]">
           <Table
             view={view}
             skew={skew}
@@ -164,15 +188,15 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             onPlayerClick={(uid) => {
               if (uid === view.me.userId) setMenuOpen(true);
             }}
+            onLayout={setPortrait}
+            controls={<MobileActions view={view} emit={emit} skew={skew} onError={setToast} onStart={startGame} />}
           />
         </div>
 
+        {!portrait && (
         <footer className="space-y-2 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {view.me.isHost && view.room.status === 'OPEN' && (
-            <button className="btn-primary h-12 w-full text-base" onClick={async () => {
-              const r = await emit('host:start', {});
-              if (!r.ok) setToast(r.error);
-            }}>
+            <button className="btn-primary h-12 w-full text-base" onClick={startGame}>
               Start the game
             </button>
           )}
@@ -206,6 +230,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             </p>
           )}
         </footer>
+        )}
       </div>
 
       {/* desktop side panel */}

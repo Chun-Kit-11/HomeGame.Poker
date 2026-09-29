@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import type { ClientPayload, TableView } from '@poker/shared';
-import { chips } from '@/lib/format';
+import { useAmount } from '@/lib/display';
 import type { Emit } from '@/lib/useTable';
 import { useCountdown } from './TimerRing';
 
@@ -19,6 +19,7 @@ export function potFractionTo(view: TableView, fraction: number): number {
 }
 
 export function ActionBar({ view, emit, skew, onError }: { view: TableView; emit: Emit; skew: number; onError: (e: string) => void }) {
+  const chips = useAmount();
   const hand = view.hand;
   const legal = hand?.legal ?? null;
   const mySeat = view.me.seat;
