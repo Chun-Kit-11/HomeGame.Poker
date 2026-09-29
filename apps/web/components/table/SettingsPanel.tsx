@@ -18,10 +18,12 @@ export function SettingsPanel({ onMutedChange }: { onMutedChange?: (m: boolean) 
     <div className="space-y-6 p-4 text-sm">
       <section>
         <h3 className="eyebrow mb-2">Table colour</h3>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
           {(Object.keys(THEMES) as ThemeName[]).map((k) => (
             <button key={k} onClick={() => setTheme(k)} className={`flex flex-col items-center gap-1.5 rounded-xl p-2 ring-1 ring-inset ${theme === k ? 'bg-gold/10 ring-gold/60' : 'bg-black/25 ring-white/10'}`}>
-              <span className="h-8 w-12 rounded-full ring-2 ring-black/60" style={{ background: THEMES[k].felt }} />
+              <span className="h-8 w-12 rounded-full p-[3px]" style={{ background: THEMES[k].rail }}>
+                <span className="block h-full w-full rounded-full" style={{ background: THEMES[k].felt }} />
+              </span>
               <span className={`text-[11px] ${theme === k ? 'text-gold' : 'text-white/60'}`}>{THEMES[k].label}</span>
             </button>
           ))}

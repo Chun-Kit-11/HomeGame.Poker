@@ -9,6 +9,7 @@ import { PlayerMenu } from '@/components/table/PlayerMenu';
 import { SeatDialog } from '@/components/table/SeatDialog';
 import { StatsPanel } from '@/components/table/StatsPanel';
 import { Table } from '@/components/table/Table';
+import { useCountdown } from '@/components/table/TimerRing';
 import { MobileActions } from '@/components/table/MobileActions';
 import { SettingsPanel } from '@/components/table/SettingsPanel';
 import { Standings } from '@/components/table/TournamentBar';
@@ -82,6 +83,46 @@ function Room({ table }: { table: ReturnType<typeof useTable> }) {
     if ('vibrate' in navigator) navigator.vibrate?.(120);
   }, [legal, view.hand]);
 
+  // Countdown warning: a beep for each of the last 5 seconds of MY turn, plus a vibration
+  const myDeadline = legal ? (view.hand?.deadline ?? null) : null;
+  const mySecs = useCountdown(myDeadline, skew);
+  const lastTick = useRef<number | null>(null);
+  useEffect(() => {
+    if (mySecs === null) {
+      lastTick.current = null;
+      return;
+    }
+    if (mySecs <= 5 && mySecs > 0 && lastTick.current !== mySecs) {
+      lastTick.current = mySecs;
+      playSound(mySecs <= 2 ? 'tickUrgent' : 'tick');
+      if (mySecs === 5) navigator.vibrate?.([80, 60, 80]);
+    }
+    if (mySecs > 5) lastTick.current = null;
+  }, [mySecs]);
+  const usingBank = !!legal && !!view.hand?.usingTimeBank;
+  useEffect(() => {
+    if (usingBank) playSound('timeBank');
+  }, [usingBank]);
+
+  // Keep the phone screen awake while at the table
+  useEffect(() => {
+    let lock: { release?: () => Promise<void> } | null = null;
+    const request = async () => {
+      try {
+        lock = await (navigator as unknown as { wakeLock?: { request: (t: string) => Promise<{ release: () => Promise<void> }> } }).wakeLock?.request('screen') ?? null;
+      } catch {
+        /* not supported or denied */
+      }
+    };
+    void request();
+    const onVisible = () => document.visibilityState === 'visible' && void request();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      void lock?.release?.();
+    };
+  }, []);
+
   useEffect(() => {
     if (panelOpen && tab === 'chat') setUnread(0);
     else if (chat.length) setUnread((u) => u + 1);
@@ -120,7 +161,10 @@ function Room({ table }: { table: ReturnType<typeof useTable> }) {
   );
 
   return (
-    <main className="flex h-dvh flex-col overflow-hidden lg:flex-row" style={{ background: theme.backdrop }}>
+    <main
+      className="flex h-dvh select-none flex-col overflow-hidden overscroll-none lg:flex-row"
+      style={{ background: theme.backdrop, ['--plate' as string]: theme.plate, ['--stack' as string]: theme.stack }}
+    >
       <div className="flex min-h-0 flex-1 flex-col">
         <header className="flex items-center gap-2 px-3 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))]">
           <Link href="/lobby" className="icon-btn" aria-label="Lobby">

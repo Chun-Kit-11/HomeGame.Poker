@@ -78,7 +78,7 @@ export function makeRoom(config: RoomConfig, opts: { dealer?: Dealer; RoomClass?
     clock,
     transport,
     dealer: opts.dealer ?? new CryptoDealer(),
-    delays: { afterHand: 1000, afterShowdown: 1000, decisionMs: 5000 },
+    delays: { afterHand: 1000, afterShowdown: 1000, decisionMs: 5000, runoutStep: 10 },
   });
   return { room, clock, transport, persistence };
 }

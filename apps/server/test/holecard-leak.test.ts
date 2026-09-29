@@ -31,7 +31,7 @@ describe('hole card privacy over real sockets', () => {
       dealer: () => new CryptoDealer(),
       transport: (code) => socketTransport(io, code),
       loadRoom: async () => null,
-      delays: { afterHand: 30, afterShowdown: 30, decisionMs: 2000 },
+      delays: { afterHand: 30, afterShowdown: 30, decisionMs: 2000, runoutStep: 20 },
     });
     manager.add({ id: 'leakroom', code: 'LEAK01', hostId: 'alice', config: cashConfig({ autoApprove: true }, { runItTwice: true }), status: 'OPEN' });
     // Test auth: the cookie is simply "uid=<name>"

@@ -13,7 +13,7 @@ describe('fair dealer', () => {
     const dealer = new FairDealer('FAIR01', (e, p) => transport.toAll(e, p), clock, 1500);
     const room = new Room(
       { id: 'r', code: 'FAIR01', hostId: 'host', config: cashConfig({ autoApprove: true }), status: 'OPEN' },
-      { persistence, clock, transport, dealer, delays: { afterHand: 500, afterShowdown: 500, decisionMs: 5000 } },
+      { persistence, clock, transport, dealer, delays: { afterHand: 500, afterShowdown: 500, decisionMs: 5000, runoutStep: 10 } },
     );
     const users = ['host', 'bob', 'cara'];
     users.forEach((u, i) => {

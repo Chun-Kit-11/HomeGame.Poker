@@ -34,3 +34,22 @@ export function useCountdown(deadline: number | null, skew: number) {
   }, [deadline, skew]);
   return deadline ? Math.max(0, Math.ceil((deadline - now) / 1000)) : null;
 }
+
+/** Remaining seconds and the fraction of the current timer left (for bars). */
+export function useTimer(deadline: number | null, skew: number) {
+  const total = useRef<{ deadline: number; ms: number } | null>(null);
+  const [now, setNow] = useState(() => Date.now() + skew);
+  useEffect(() => {
+    if (!deadline) return;
+    const id = setInterval(() => setNow(Date.now() + skew), 100);
+    return () => clearInterval(id);
+  }, [deadline, skew]);
+  if (!deadline) return { secs: null, frac: 0 };
+  if (!total.current || total.current.deadline !== deadline) total.current = { deadline, ms: Math.max(1000, deadline - (Date.now() + skew)) };
+  const remaining = Math.max(0, deadline - now);
+  return { secs: Math.ceil(remaining / 1000), frac: Math.min(1, remaining / total.current.ms) };
+}
+
+export function timerColor(frac: number, bank: boolean) {
+  return bank ? '#e3c173' : frac > 0.5 ? '#34d399' : frac > 0.2 ? '#fbbf24' : '#ef4444';
+}

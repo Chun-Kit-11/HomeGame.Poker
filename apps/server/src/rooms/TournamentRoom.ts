@@ -289,7 +289,7 @@ export class TournamentRoom extends Room {
         if (sp && sp.status === 'busted' && sp.stack === 0) this.removeFromSeat(sp);
       }
       if (this.isFinished()) {
-        if (this.hand && this.hand.phase !== 'complete') this.endAfterHand = true;
+        if (this.handInProgress()) this.endAfterHand = true;
         else {
           this.finishSession();
           return;

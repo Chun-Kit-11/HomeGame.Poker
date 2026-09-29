@@ -5,3 +5,4 @@ export * from './pots';
 export * from './positions';
 export * from './hand';
 export * from './stats';
+export * from './equity';

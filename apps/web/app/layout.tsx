@@ -6,14 +6,18 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Home Game · Private Poker',
   description: 'Private No-Limit Hold\'em with friends',
+  applicationName: 'Home Game',
+  appleWebApp: { capable: true, title: 'Home Game', statusBarStyle: 'black-translucent' },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#07090a',
+  themeColor: '#030303',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -6,6 +6,7 @@ import {
   type PrevPositions,
   applyAction,
   computePots,
+  equities,
   describeScore,
   scoreHand,
   handStats,
@@ -63,6 +64,8 @@ const DEFAULT_DELAYS = {
   afterShowdown: 5500,
   /** Time to decide show/muck or run-it-twice */
   decisionMs: 10_000,
+  /** All-in runout: pause between revealing each street */
+  runoutStep: 1600,
 };
 
 export interface RoomInfo {
@@ -413,7 +416,7 @@ export class Room {
     if (this.status !== 'RUNNING') throw new RoomError('The game is not running');
     this.status = 'PAUSED';
     this.onPause();
-    this.system(this.hand && this.hand.phase !== 'complete' ? 'Game will pause after this hand' : 'Game paused');
+    this.system(this.handInProgress() ? 'Game will pause after this hand' : 'Game paused');
     this.saveSnapshot();
     this.queueBroadcast();
   }
@@ -457,7 +460,7 @@ export class Room {
     if (this.config.gameMode !== 'CASH') throw new RoomError('Blinds follow the tournament schedule');
     if (smallBlind > bigBlind) throw new RoomError('Small blind must not exceed the big blind');
     this.pendingBlinds = { smallBlind, bigBlind };
-    if (!this.hand || this.hand.phase === 'complete') this.applyPendingBlinds();
+    if (!this.handInProgress()) this.applyPendingBlinds();
     else this.system(`Blinds will change to ${smallBlind}/${bigBlind} from the next hand`);
     this.queueBroadcast();
   }
@@ -478,7 +481,7 @@ export class Room {
   end(byUserId: string) {
     this.assertHost(byUserId);
     if (this.status === 'ENDED') return;
-    if (this.hand && this.hand.phase !== 'complete') {
+    if (this.handInProgress()) {
       this.endAfterHand = true;
       this.system('The session will end after this hand');
       this.queueBroadcast();
@@ -583,7 +586,7 @@ export class Room {
 
   maybeStartHand() {
     if (!this.canStartHands() || this.starting || this.nextHandTimer) return;
-    if (this.hand && this.hand.phase !== 'complete') return;
+    if (this.handInProgress()) return;
     const pos = nextPositions(this.candidates(), this.prev, (n) => randomInt(n));
     if (!pos) {
       this.notice = 'Waiting for at least two players';
@@ -717,7 +720,13 @@ export class Room {
   /** Common follow-up after any change to the hand. */
   protected afterChange() {
     if (this.hand && this.hand.phase === 'complete' && !this.handClosed) {
-      this.onHandComplete();
+      if (this.runout?.handNo === this.hand.config.handNo) {
+        // still revealing the runout
+      } else {
+        const from = this.hand.allInShowdown && !this.hand.board2 ? this.tabledBoardLength(this.hand) : null;
+        if (from !== null && from < 5 && this.shownPlayers(this.hand).length >= 2) this.startRunout(this.hand, from);
+        else this.onHandComplete();
+      }
     } else if (this.hand && this.hand.phase !== 'complete') {
       this.armTimer();
     }
@@ -725,6 +734,73 @@ export class Room {
   }
 
   protected handClosed = false;
+
+  /** All-in runout being revealed street by street (with win percentages) */
+  protected runout: { handNo: number; stages: number[]; startedAt: number; equity: Map<number, Record<number, number>>; timers: unknown[] } | null = null;
+  private liveEquity: { key: string; equity: Record<number, number> } | null = null;
+
+  /** A hand is being played, or its all-in runout is still being revealed. */
+  protected handInProgress(): boolean {
+    return !!this.hand && (this.hand.phase !== 'complete' || !this.handClosed);
+  }
+
+  /** Board length at the moment hands were turned face up (all-in). */
+  private tabledBoardLength(hand: HandState): number | null {
+    let len = 0;
+    for (const e of hand.events) {
+      if (e.type === 'street' && e.run === 1) len = e.board.length;
+      if (e.type === 'reveal') return len;
+    }
+    return null;
+  }
+
+  private shownPlayers(hand: HandState) {
+    return hand.players.filter((p) => !p.folded && p.shown);
+  }
+
+  /** Win percentage of each face-up player for a board, keyed by seat. */
+  private equityFor(hand: HandState, board: number[]): Record<number, number> {
+    const players = this.shownPlayers(hand);
+    if (players.length < 2 || board.length >= 5) return {};
+    const eq = equities(
+      players.map((p) => p.holeCards),
+      board,
+      { seed: hand.config.handNo * 7919 + board.length },
+    );
+    return Object.fromEntries(players.map((p, i) => [p.seat, eq[i]]));
+  }
+
+  /** Starts the street-by-street reveal of an all-in runout; settles the hand at the end. */
+  private startRunout(hand: HandState, fromLen: number) {
+    this.clearTimer();
+    const stages = [fromLen, ...[3, 4, 5].filter((n) => n > fromLen)];
+    const equity = new Map<number, Record<number, number>>();
+    for (const len of stages) if (len < 5) equity.set(len, this.equityFor(hand, hand.board.slice(0, len)));
+    const step = this.delays.runoutStep;
+    const timers: unknown[] = [];
+    this.runout = { handNo: hand.config.handNo, stages, startedAt: this.deps.clock.now(), equity, timers };
+    for (let i = 1; i < stages.length; i++) {
+      timers.push(
+        this.deps.clock.setTimeout(() => {
+          this.deps.transport.toAll('table:event', { kind: 'street' });
+          if (i === stages.length - 1) {
+            this.runout = null;
+            this.onHandComplete();
+          }
+          this.queueBroadcast();
+        }, i * step),
+      );
+    }
+  }
+
+  /** Board cards to show while a runout is being revealed, or null. */
+  protected revealLength(): number | null {
+    const r = this.runout;
+    if (!r || !this.hand || r.handNo !== this.hand.config.handNo) return null;
+    const idx = Math.floor((this.deps.clock.now() - r.startedAt) / this.delays.runoutStep);
+    if (idx >= r.stages.length - 1) return null;
+    return r.stages[Math.max(0, idx)];
+  }
 
   protected onHandComplete() {
     const hand = this.hand!;
@@ -961,7 +1037,19 @@ export class Room {
     if (hand?.phase === 'complete') {
       for (const e of hand.events) if (e.type === 'pot') for (const w of e.winners) wonBySeat.set(w.seat, (wonBySeat.get(w.seat) ?? 0) + w.amount);
     }
-    const boardComplete = !!hand && hand.board.length === 5;
+    // During an all-in runout, show the board street by street and hold back the result
+    const reveal = hand ? this.revealLength() : null;
+    const revealing = reveal !== null;
+    const board = hand ? (revealing ? hand.board.slice(0, reveal) : hand.board) : [];
+    const potWon = [...wonBySeat.values()].reduce((a, b) => a + b, 0);
+    let equity: Record<number, number> = {};
+    if (hand && revealing) equity = this.runout!.equity.get(reveal!) ?? {};
+    else if (hand && hand.phase === 'runItTwice' && hand.allInShowdown) {
+      const key = `${hand.config.handNo}:${hand.board.length}`;
+      if (this.liveEquity?.key !== key) this.liveEquity = { key, equity: this.equityFor(hand, hand.board) };
+      equity = this.liveEquity.equity;
+    }
+    const boardComplete = !!hand && board.length === 5;
 
     const seats: (SeatView | null)[] = this.seats.map((sp) => {
       if (!sp) return null;
@@ -972,25 +1060,28 @@ export class Room {
         const visible = hp.id === userId || hp.shown;
         if (visible) cards = [...hp.holeCards];
         else if (!hp.folded) cards = 'hidden';
-        if (hp.shown && !hp.folded && boardComplete) desc = showdownDescriptions(hand!, hp.seat).join(' / ');
-        else if (hp.id === userId && !hp.folded && hand!.board.length >= 3) desc = describeScore(scoreHand([...hp.holeCards, ...hand!.board]));
+        if (hp.shown && !hp.folded && boardComplete && !revealing) desc = showdownDescriptions(hand!, hp.seat).join(' / ');
+        else if ((hp.id === userId || hp.shown) && !hp.folded && board.length >= 3) desc = describeScore(scoreHand([...hp.holeCards, ...board]));
       }
+      const won = revealing ? 0 : (wonBySeat.get(sp.seat) ?? 0);
+      const stackNow = !hp ? sp.stack : revealing ? hp.stack - (wonBySeat.get(sp.seat) ?? 0) : hand!.phase !== 'complete' ? hp.stack : sp.stack;
       return {
         seat: sp.seat,
         userId: sp.userId,
         username: sp.username,
-        stack: hp && hand!.phase !== 'complete' ? hp.stack : sp.stack,
+        stack: stackNow,
         status: sp.status,
         connected: this.isConnected(sp.userId),
         timeBankChips: sp.timeBankChips,
-        inHand: !!hp && !hp.folded && hand!.phase !== 'complete',
+        inHand: !!hp && !hp.folded && (hand!.phase !== 'complete' || revealing),
         streetBet: hp && hand!.phase !== 'complete' ? hp.streetBet : 0,
         folded: !!hp?.folded,
-        allIn: !!hp?.allIn && hand!.phase !== 'complete',
+        allIn: !!hp && (revealing ? stackNow === 0 && !hp.folded : hp.allIn && hand!.phase !== 'complete'),
         cards,
         handDescription: desc,
         lastAction: hp ? (this.lastActions.get(sp.seat) ?? null) : null,
-        won: wonBySeat.get(sp.seat) ?? 0,
+        won,
+        equity: hp && equity[hp.seat] !== undefined ? equity[hp.seat] : null,
         leaving: sp.leaving,
         pendingAmount: sp.pendingAmount,
       };
@@ -1004,22 +1095,22 @@ export class Room {
       );
       const myHandSeat = this.currentHandSeat(userId);
       const results: HandView['results'] = [];
-      if (hand.phase === 'complete') {
+      if (hand.phase === 'complete' && !revealing) {
         for (const e of hand.events) {
           if (e.type === 'pot') for (const w of e.winners) results.push({ seat: w.seat, amount: w.amount, description: e.description, pot: e.index, run: e.run });
         }
       }
       handView = {
         handNo: hand.config.handNo,
-        phase: hand.phase,
+        phase: revealing ? 'showdown' : hand.phase,
         street: hand.street,
-        board: [...hand.board],
+        board: [...board],
         board2: hand.board2 ? [...hand.board2] : null,
         buttonSeat: hand.config.buttonSeat,
         sbSeat: hand.config.sbSeat,
         bbSeat: hand.config.bbSeat,
-        pots: hand.phase === 'complete' ? [] : pots,
-        totalPot: hand.phase === 'complete' ? 0 : potTotal(hand),
+        pots: revealing ? [{ amount: potWon, eligible: [] }] : hand.phase === 'complete' ? [] : pots,
+        totalPot: revealing ? potWon : hand.phase === 'complete' ? 0 : potTotal(hand),
         currentBet: hand.currentBet,
         toAct: hand.toAct,
         deadline: this.timer?.deadline ?? null,
@@ -1029,7 +1120,7 @@ export class Room {
         showdownAwaiting: hand.phase === 'showdown' ? (hand.showdown?.awaiting ?? null) : null,
         results,
         fair: this.handFair?.serverSeedHash
-          ? { serverSeedHash: this.handFair.serverSeedHash, serverSeed: hand.phase === 'complete' ? this.handFair.serverSeed : null }
+          ? { serverSeedHash: this.handFair.serverSeedHash, serverSeed: hand.phase === 'complete' && !revealing ? this.handFair.serverSeed : null }
           : null,
       };
     }
@@ -1123,7 +1214,7 @@ export class Room {
   /** True when nobody is connected and no hand is running (safe to unload from memory). */
   isIdle(): boolean {
     const anyone = [...this.members.values()].some((m) => m.sockets > 0);
-    return !anyone && (!this.hand || this.hand.phase === 'complete') && !this.starting;
+    return !anyone && !this.handInProgress() && !this.starting;
   }
 
   // -------------------------------------------------------------------------
@@ -1225,7 +1316,7 @@ export class Room {
 
   /** Dealt into a hand that is still being played. */
   protected isDealtInLiveHand(seat: number): boolean {
-    return !!this.hand && this.hand.phase !== 'complete' && this.handSeats.get(seat) === this.seats[seat]?.userId;
+    return this.handInProgress() && this.handSeats.get(seat) === this.seats[seat]?.userId;
   }
 
   /** Has chips at risk in the live hand (dealt in and not folded). */
@@ -1246,5 +1337,7 @@ export class Room {
   dispose() {
     this.clearTimer();
     this.clearNextHand();
+    for (const t of this.runout?.timers ?? []) this.deps.clock.clearTimeout(t);
+    this.runout = null;
   }
 }

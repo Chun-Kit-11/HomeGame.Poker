@@ -85,6 +85,8 @@ export interface SeatView {
   lastAction: string | null;
   /** Chips won in the last completed hand */
   won: number;
+  /** Win probability (0-1) while hands are face up in an all-in, else null */
+  equity: number | null;
   leaving: boolean;
   /** Buy-in amount pending approval (status 'pending') */
   pendingAmount?: number;

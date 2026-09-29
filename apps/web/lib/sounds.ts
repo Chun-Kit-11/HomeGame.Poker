@@ -32,6 +32,8 @@ const SOUNDS: Record<string, [number, number, OscillatorType, number][]> = {
   win: [[523, 0.1, 'triangle', 0], [659, 0.1, 'triangle', 0.1], [784, 0.18, 'triangle', 0.2]],
   yourTurn: [[880, 0.12, 'sine', 0], [1175, 0.16, 'sine', 0.14]],
   timeBank: [[300, 0.1, 'sawtooth', 0]],
+  tick: [[1046, 0.07, 'square', 0]],
+  tickUrgent: [[1318, 0.08, 'square', 0], [1318, 0.08, 'square', 0.12]],
 };
 
 export function playSound(kind: string) {

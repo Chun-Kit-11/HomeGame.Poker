@@ -15,14 +15,14 @@ type Pt = { x: number; y: number };
  * Hand-tuned so seats never cover the board, the viewer's cards or the controls.
  */
 const PORTRAIT: Record<number, [number, number][]> = {
-  1: [[50, 7]],
-  2: [[13, 40], [87, 40]],
-  3: [[13, 40], [50, 7], [87, 40]],
-  4: [[13, 63], [14, 21], [86, 21], [87, 63]],
-  5: [[13, 63], [13, 35], [50, 7], [87, 35], [87, 63]],
-  6: [[13, 63], [13, 40], [28, 8], [72, 8], [87, 40], [87, 63]],
-  7: [[13, 63], [13, 40], [15, 21], [50, 7], [85, 21], [87, 40], [87, 63]],
-  8: [[13, 63], [13, 40], [14, 22], [31, 7], [69, 7], [86, 22], [87, 40], [87, 63]],
+  1: [[50, 8]],
+  2: [[13, 35], [87, 35]],
+  3: [[13, 35], [50, 8], [87, 35]],
+  4: [[13, 66], [14, 22], [86, 22], [87, 66]],
+  5: [[13, 66], [13, 33], [50, 8], [87, 33], [87, 66]],
+  6: [[13, 66], [13, 36], [28, 8], [72, 8], [87, 36], [87, 66]],
+  7: [[13, 66], [13, 36], [15, 20], [50, 7], [85, 20], [87, 36], [87, 66]],
+  8: [[13, 66], [13, 37], [14, 21], [31, 7], [69, 7], [86, 21], [87, 37], [87, 66]],
 };
 
 function seatPositions(n: number, anchor: number, portrait: boolean, heroSeated: boolean): (Pt | null)[] {
@@ -104,10 +104,11 @@ export function Table({
   const positions = seatPositions(view.seats.length, heroSeat ?? 0, portrait, heroSeated);
   const canSit = view.me.seat === null && !view.me.pendingRequest && view.room.status !== 'ENDED' && (!view.tournament || view.tournament.lateRegOpen);
   const reactionFor = (uid: string) => [...reactions].reverse().find((r) => r.userId === uid)?.emoji ?? null;
-  const cardPx = Math.round(Math.min(portrait ? 66 : 72, w * (portrait ? 0.118 : 0.062), portrait ? 999 : h * 0.13));
+  // Big, readable community cards: phones first
+  const cardPx = Math.round(Math.min(portrait ? 80 : 88, w * (portrait ? 0.168 : 0.076), portrait ? h * 0.085 : h * 0.17));
   // Seats keep a fixed design size and are scaled to the table so small screens stay uncluttered
-  const seatScale = portrait ? Math.min(1, w / 380) : Math.max(0.55, Math.min(1, h / 520));
-  const boardY = portrait ? 51.5 : 50;
+  const seatScale = portrait ? Math.min(0.95, w / 400) : Math.max(0.55, Math.min(1, h / 520));
+  const boardY = portrait ? 50.5 : 50;
   const collected = hand && hand.phase !== 'complete' ? hand.pots.reduce((t, p) => t + p.amount, 0) : 0;
   const hero = heroSeated ? view.seats[heroSeat!] : null;
 
@@ -323,7 +324,7 @@ function FeltInfo({ view, skew, portrait, scale, compact: oneLine }: { view: Tab
   return (
     <div
       className="pointer-events-none absolute left-1/2 flex w-[50%] flex-col items-center text-center leading-snug text-white/55"
-      style={{ top: portrait ? '27%' : '24%', transform: `translateX(-50%) scale(${scale})`, transformOrigin: 'top center' }}
+      style={{ top: portrait ? '23%' : '24%', transform: `translateX(-50%) scale(${scale})`, transformOrigin: 'top center' }}
     >
       <div className="max-w-full truncate text-[13px] font-semibold text-white/70">{view.room.name}</div>
       <div className="mt-1 text-[12px]">
@@ -363,7 +364,7 @@ function Results({ view, fmt, portrait }: { view: TableView; fmt: (n: number) =>
   return (
     <>
       {lines.length > 0 && (
-        <div className={`rounded-xl bg-black/55 px-3 py-1.5 text-center font-medium text-gold ring-1 ring-inset ring-gold/25 backdrop-blur ${portrait ? 'max-w-[82vw] text-xs' : 'max-w-[46vw] text-[11px]'}`}>
+        <div className={`rounded-xl bg-black/60 px-3 py-1.5 text-center font-medium text-gold ring-1 ring-inset ring-gold/25 backdrop-blur ${portrait ? 'max-w-[56vw] text-[11px]' : 'max-w-[40vw] text-[11px]'}`}>
           {lines.slice(0, 2).map((g, i) => (
             <div key={i} className="truncate">
               {join(g.names)} {g.names.length > 1 ? 'split' : 'wins'} {fmt(g.amount)} · {g.description}

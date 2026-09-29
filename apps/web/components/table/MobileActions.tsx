@@ -165,7 +165,7 @@ export function MobileActions({ view, emit, skew, onError, onStart }: { view: Ta
           <button
             key={k}
             onClick={() => setPre(pre === k ? null : k)}
-            className={`btn h-11 justify-start ring-1 ring-inset backdrop-blur ${pre === k ? 'bg-gold/20 text-gold ring-gold/60' : 'bg-[#0b1224]/80 text-white/70 ring-white/10'}`}
+            className={`btn h-11 justify-start ring-1 ring-inset backdrop-blur ${pre === k ? 'bg-gold/20 text-gold ring-gold/60' : 'bg-[var(--plate)] text-white/70 ring-white/10'}`}
           >
             <span className={`grid h-4 w-4 place-items-center rounded border text-[10px] ${pre === k ? 'border-gold bg-gold text-black' : 'border-white/30'}`}>{pre === k ? '✓' : ''}</span>
             {label}
@@ -179,7 +179,7 @@ export function MobileActions({ view, emit, skew, onError, onStart }: { view: Ta
   return (
     <>
       {custom && (legal.canBet || legal.canRaise) && (
-        <div className="slide-up absolute inset-x-[3%] bottom-[76px] z-40 space-y-3 rounded-2xl bg-[#0b1224]/95 p-3 shadow-2xl ring-1 ring-inset ring-white/10 backdrop-blur-xl">
+        <div className="slide-up absolute inset-x-[3%] bottom-[76px] z-40 space-y-3 rounded-2xl bg-[var(--plate)] p-3 shadow-2xl ring-1 ring-inset ring-white/10 backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <span className="eyebrow">{legal.canBet ? 'Bet' : 'Raise to'}</span>
             <span className="text-xs text-white/45 tabular">{potPct(amount)} pot</span>
@@ -221,7 +221,7 @@ export function MobileActions({ view, emit, skew, onError, onStart }: { view: Ta
               disabled={busy}
               onClick={() => send(p.allIn ? { type: 'allIn' } : { type: legal.canBet ? 'bet' : 'raise', to: p.to })}
               className={`relative flex h-[46px] flex-col justify-center rounded-xl px-3 text-left shadow-[0_10px_24px_-10px_rgba(0,0,0,0.9)] ring-1 ring-inset backdrop-blur-md transition active:scale-[0.97] ${
-                p.allIn ? 'bg-gradient-to-b from-[#5b1220]/95 to-[#3a0b15]/95 ring-red-300/30' : 'bg-[#0b1224]/90 ring-white/10 hover:bg-[#13203d]/95'
+                p.allIn ? 'bg-gradient-to-b from-[#5b1220]/95 to-[#3a0b15]/95 ring-red-300/30' : 'bg-[var(--plate)] ring-white/10 hover:brightness-125'
               }`}
             >
               <span className="flex items-center justify-between text-[10px] text-white/55">
@@ -236,13 +236,13 @@ export function MobileActions({ view, emit, skew, onError, onStart }: { view: Ta
 
       <div className={presets.length ? bottomRow : 'absolute inset-x-[3%] bottom-2 z-30 flex gap-2'}>
         {!legal.canCheck && (
-          <button className="btn h-14 flex-1 bg-[#0b1224]/90 text-base text-red-300 ring-1 ring-inset ring-red-400/35 backdrop-blur" disabled={busy} onClick={() => send({ type: 'fold' })}>
+          <button className="btn h-14 flex-1 bg-[var(--plate)] text-base text-red-300 ring-1 ring-inset ring-red-400/35 backdrop-blur" disabled={busy} onClick={() => send({ type: 'fold' })}>
             Fold
           </button>
         )}
         {legal.canCheck ? (
           <button
-            className="btn h-14 flex-1 bg-gradient-to-b from-[#c43b3b] to-[#8f1f1f] text-base text-white shadow-[0_12px_30px_-12px_rgba(220,38,38,0.8)] ring-1 ring-inset ring-white/20"
+            className="btn-primary h-14 flex-1 text-base"
             disabled={busy}
             onClick={() => send({ type: 'check' })}
           >
@@ -250,7 +250,7 @@ export function MobileActions({ view, emit, skew, onError, onStart }: { view: Ta
           </button>
         ) : (
           <button
-            className="btn h-14 flex-1 flex-col gap-0 bg-gradient-to-b from-[#2f63d8] to-[#1c3f97] text-white shadow-[0_12px_30px_-12px_rgba(59,130,246,0.8)] ring-1 ring-inset ring-white/20"
+            className="btn-primary h-14 flex-1 flex-col gap-0"
             disabled={busy}
             onClick={() => send({ type: 'call' })}
           >
@@ -261,7 +261,7 @@ export function MobileActions({ view, emit, skew, onError, onStart }: { view: Ta
         {presets.length > 0 && (
           <button
             aria-label="Custom amount"
-            className={`btn h-14 w-12 shrink-0 px-0 ring-1 ring-inset backdrop-blur ${custom ? 'bg-gold/25 text-gold ring-gold/60' : 'bg-[#0b1224]/90 text-gold ring-white/10'}`}
+            className={`btn h-14 w-12 shrink-0 px-0 ring-1 ring-inset backdrop-blur ${custom ? 'bg-gold/25 text-gold ring-gold/60' : 'bg-[var(--plate)] text-gold ring-white/10'}`}
             onClick={() => setCustom(!custom)}
           >
             <svg viewBox="0 0 24 24" className={`h-6 w-6 transition ${custom ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
