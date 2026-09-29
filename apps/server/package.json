@@ -1,0 +1,32 @@
+{
+  "name": "@poker/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false --ignore '../web/**' src/index.ts",
+    "start": "NODE_ENV=production tsx src/index.ts",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "^2.0.2",
+    "@poker/engine": "*",
+    "@poker/shared": "*",
+    "@prisma/client": "~6.19.3",
+    "cookie": "^1.0.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "next": "15.5.26",
+    "prisma": "~6.19.3",
+    "react": "19.1.9",
+    "react-dom": "19.1.9",
+    "socket.io": "^4.8.1",
+    "tsx": "^4.20.6"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "socket.io-client": "^4.8.1"
+  }
+}

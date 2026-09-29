@@ -1,0 +1,31 @@
+{
+  "name": "pokerapp",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Private real-time multiplayer No-Limit Hold'em for friends",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @poker/server",
+    "build": "npm run db:generate && npm run build -w @poker/web",
+    "start": "npm run start -w @poker/server",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:engine": "vitest run packages/engine",
+    "test:exhaustive": "EXHAUSTIVE=1 vitest run packages/engine/test/evaluator.exhaustive.test.ts",
+    "typecheck": "tsc -p packages/engine && tsc -p packages/shared && tsc -p apps/server && tsc -p apps/web",
+    "db:generate": "npm run db:generate -w @poker/server",
+    "db:migrate": "npm run db:migrate -w @poker/server",
+    "db:deploy": "npm run db:deploy -w @poker/server"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

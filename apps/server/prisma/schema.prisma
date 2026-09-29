@@ -1,0 +1,179 @@
+// Database schema for the poker app.
+// Live game state is held in memory by the server; the database stores
+// accounts, rooms (with a between-hands snapshot for crash recovery),
+// full hand histories, and the money ledger.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  /// Display name as typed at registration
+  username      String
+  /// Lower-cased username, used for uniqueness and login
+  usernameLower String   @unique
+  passwordHash  String
+  createdAt     DateTime @default(now())
+
+  sessions    Session[]
+  hostedRooms Room[]        @relation("RoomHost")
+  memberships RoomMember[]
+  handPlayers HandPlayer[]
+  ledger      LedgerEntry[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  /// SHA-256 of the random cookie token (the raw token is never stored)
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId])
+}
+
+enum GameMode {
+  CASH
+  TOURNAMENT
+}
+
+enum MoneyMode {
+  PLAY
+  LEDGER
+}
+
+enum RoomStatus {
+  OPEN
+  RUNNING
+  PAUSED
+  ENDED
+}
+
+model Room {
+  id        String     @id @default(cuid())
+  /// Short invite code, e.g. "K7QX2M"
+  code      String     @unique
+  name      String
+  hostId    String
+  host      User       @relation("RoomHost", fields: [hostId], references: [id])
+  gameMode  GameMode
+  moneyMode MoneyMode
+  /// Full room configuration (blinds, timers, schedule, ledger ratio ...)
+  config    Json
+  status    RoomStatus @default(OPEN)
+  /// Between-hands snapshot of seats/stacks/tournament state for crash recovery
+  snapshot  Json?
+  /// Final results (standings, settlement) written when the session ends
+  results   Json?
+  createdAt DateTime   @default(now())
+  endedAt   DateTime?
+
+  members RoomMember[]
+  hands   Hand[]
+  ledger  LedgerEntry[]
+
+  @@index([hostId])
+}
+
+model RoomMember {
+  roomId   String
+  userId   String
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// True once the user has taken a seat at least once (i.e. played)
+  played   Boolean  @default(false)
+  joinedAt DateTime @default(now())
+
+  @@id([roomId, userId])
+  @@index([userId])
+}
+
+model Hand {
+  id             String    @id @default(cuid())
+  roomId         String
+  room           Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  handNo         Int
+  startedAt      DateTime
+  endedAt        DateTime  @default(now())
+  /// Provably fair data
+  serverSeedHash String
+  serverSeed     String
+  clientSeeds    Json
+  /// Blinds that applied, board(s), final pot size
+  smallBlind     Int
+  bigBlind       Int
+  ante           Int       @default(0)
+  board          Json
+  potTotal       Int
+  /// Complete engine event log (actions, streets, showdown, pot awards)
+  history        Json
+
+  players HandPlayer[]
+
+  @@unique([roomId, handNo])
+  @@index([roomId])
+}
+
+model HandPlayer {
+  handId      String
+  userId      String
+  hand        Hand    @relation(fields: [handId], references: [id], onDelete: Cascade)
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seat        Int
+  /// Position label at the table, e.g. "BTN", "SB", "BB", "UTG"
+  position    String
+  /// Always stored; the API only reveals them to the owner or if shown at showdown
+  holeCards   Json
+  shown       Boolean @default(false)
+  startStack  Int
+  endStack    Int
+  /// Chips won minus chips put in (endStack - startStack)
+  net         Int
+  // Pre-computed per-hand stats flags
+  vpip        Boolean @default(false)
+  pfr         Boolean @default(false)
+  threeBet    Boolean @default(false)
+  sawFlop     Boolean @default(false)
+  sawShowdown Boolean @default(false)
+  wonShowdown Boolean @default(false)
+  wonHand     Boolean @default(false)
+
+  @@id([handId, userId])
+  @@index([userId])
+}
+
+enum LedgerType {
+  BUY_IN
+  REBUY
+  TOP_UP
+  CASH_OUT
+  ENTRY
+  ADDON
+  PAYOUT
+}
+
+model LedgerEntry {
+  id          String     @id @default(cuid())
+  roomId      String
+  userId      String
+  room        Room       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        LedgerType
+  /// Chips moved (always >= 0)
+  chips       Int
+  /// Money value in minor units (sen/cents), always >= 0; direction implied by type
+  amountMinor Int
+  note        String?
+  createdAt   DateTime   @default(now())
+
+  @@index([roomId])
+  @@index([userId])
+}
