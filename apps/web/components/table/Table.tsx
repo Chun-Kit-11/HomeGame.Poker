@@ -57,7 +57,7 @@ export function Table({
   const { ref, w, h, landscape } = useFit();
   const hand = view.hand;
   const positions = layout(view.seats.length, view.me.seat, landscape);
-  const canSit = view.me.seat === null && !view.me.pendingRequest && view.room.status !== 'ENDED';
+  const canSit = view.me.seat === null && !view.me.pendingRequest && view.room.status !== 'ENDED' && (!view.tournament || view.tournament.lateRegOpen);
 
   return (
     <div ref={ref} className="grid h-full w-full place-items-center">

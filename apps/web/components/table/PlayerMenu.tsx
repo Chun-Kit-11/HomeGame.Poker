@@ -48,6 +48,16 @@ export function PlayerMenu({ view, emit, onClose, onError }: { view: TableView; 
             </button>
           </section>
         )}
+        {t && mine.status === 'sittingOut' && (
+          <button className="btn-primary w-full" onClick={() => run(emit('player:sitIn', {}))}>
+            I&apos;m back
+          </button>
+        )}
+        {t && mine.status === 'active' && view.room.status !== 'OPEN' && (
+          <button className="btn-secondary w-full" onClick={() => run(emit('player:sitOut', {}))}>
+            Sit out (you will be folded each hand)
+          </button>
+        )}
         {t && t.rebuyOpen && (
           <button className="btn-secondary w-full" onClick={() => run(emit('player:rebuy', {}))}>
             Rebuy ({chips(view.room.config.tournament!.rebuy.chips)} chips)

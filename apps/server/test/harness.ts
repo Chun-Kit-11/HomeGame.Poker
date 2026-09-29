@@ -1,4 +1,4 @@
-import { defaultRoomConfig, type RoomConfig, type TableView } from '@poker/shared';
+import { defaultLevels, defaultRoomConfig, type RoomConfig, type TableView } from '@poker/shared';
 import type { Clock } from '../src/clock';
 import { MemoryPersistence } from '../src/persistence';
 import { CryptoDealer, type Dealer } from '../src/rooms/dealer';
@@ -57,6 +57,14 @@ export class FakeTransport implements Transport {
 export function cashConfig(overrides: Partial<RoomConfig> = {}, cash: Partial<NonNullable<RoomConfig['cash']>> = {}): RoomConfig {
   const base = defaultRoomConfig('CASH', 'PLAY');
   return { ...base, ...overrides, cash: { ...base.cash!, smallBlind: 1, bigBlind: 2, minBuyIn: 40, maxBuyIn: 200, ...cash } };
+}
+
+export function tournamentConfig(
+  t: Partial<NonNullable<RoomConfig['tournament']>> = {},
+  overrides: Partial<RoomConfig> = {},
+): RoomConfig {
+  const base = defaultRoomConfig('TOURNAMENT', overrides.moneyMode ?? 'PLAY');
+  return { ...base, autoApprove: true, ...overrides, tournament: { ...base.tournament!, startingStack: 1000, levelMinutes: 10, levels: defaultLevels(1000), ...t } };
 }
 
 export function makeRoom(config: RoomConfig, opts: { dealer?: Dealer; RoomClass?: typeof Room } = {}) {

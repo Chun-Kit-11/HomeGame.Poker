@@ -70,7 +70,7 @@ export interface RoomInfo {
   status: RoomStatusValue;
 }
 
-interface SeatPlayer {
+export interface SeatPlayer {
   userId: string;
   username: string;
   seat: number;
@@ -92,7 +92,7 @@ interface Member {
   sockets: number;
 }
 
-interface BuyInRequest extends BuyInRequestView {
+export interface BuyInRequest extends BuyInRequestView {
   entry: 'waitForBB' | 'postBB';
 }
 

@@ -3,6 +3,7 @@ import type { Clock } from '../clock';
 import type { Persistence, RoomStatusValue } from '../persistence';
 import type { Dealer } from './dealer';
 import { Room, type RoomDeps, type RoomInfo, type RoomSnapshot, type Transport } from './Room';
+import { TournamentRoom } from './TournamentRoom';
 
 export interface RoomRow {
   id: string;
@@ -61,7 +62,8 @@ export class RoomManager {
       transport: this.deps.transport(info.code),
       delays: this.deps.delays,
     };
-    return this.deps.roomFactory ? this.deps.roomFactory(info, deps, snapshot) : new Room(info, deps, snapshot);
+    if (this.deps.roomFactory) return this.deps.roomFactory(info, deps, snapshot);
+    return info.config.gameMode === 'TOURNAMENT' ? new TournamentRoom(info, deps, snapshot) : new Room(info, deps, snapshot);
   }
 
   /** Registers a freshly created room (avoids a database round-trip). */

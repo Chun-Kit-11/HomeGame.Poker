@@ -9,7 +9,7 @@ import { PlayerMenu } from '@/components/table/PlayerMenu';
 import { SeatDialog } from '@/components/table/SeatDialog';
 import { StatsPanel } from '@/components/table/StatsPanel';
 import { Table } from '@/components/table/Table';
-import { TournamentBar } from '@/components/table/TournamentBar';
+import { Standings, TournamentBar } from '@/components/table/TournamentBar';
 import { chips } from '@/lib/format';
 import { isMuted, playSound, setMuted } from '@/lib/sounds';
 import { useMe } from '@/lib/useMe';
@@ -28,6 +28,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   const [toast, setToast] = useState<string | null>(null);
   const [muted, setMutedState] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [standingsClosed, setStandingsClosed] = useState(false);
   const lastTurn = useRef<string>('');
 
   useEffect(() => setMutedState(isMuted()), []);
@@ -210,6 +211,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
       {seatDialog !== null && <SeatDialog view={view} seat={seatDialog} emit={emit} onClose={() => setSeatDialog(null)} onError={setToast} />}
       {menuOpen && mySeat && <PlayerMenu view={view} emit={emit} onClose={() => setMenuOpen(false)} onError={setToast} />}
+      {view.tournament?.finished && !standingsClosed && <Standings view={view} onClose={() => setStandingsClosed(true)} />}
       {toast && <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-lg bg-black/90 px-4 py-2 text-sm shadow-lg">{toast}</div>}
     </main>
   );
