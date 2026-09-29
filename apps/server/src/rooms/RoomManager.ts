@@ -73,6 +73,17 @@ export class RoomManager {
     return room;
   }
 
+  /** Unloads rooms nobody is using (their state is in the database snapshot). */
+  sweep() {
+    for (const [code, room] of this.rooms) {
+      if (room.status === 'ENDED' || room.isIdle()) {
+        room.saveSnapshotNow();
+        room.dispose();
+        this.rooms.delete(code);
+      }
+    }
+  }
+
   all(): Room[] {
     return [...this.rooms.values()];
   }

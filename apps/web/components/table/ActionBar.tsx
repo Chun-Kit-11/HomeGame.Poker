@@ -26,6 +26,9 @@ export function ActionBar({ view, emit, skew, onError }: { view: TableView; emit
   const [amount, setAmount] = useState(0);
   const [busy, setBusy] = useState(false);
   const secs = useCountdown(hand?.deadline ?? null, skew);
+  const [pre, setPre] = useState<null | 'checkFold' | 'callAny'>(null);
+  const streetKey = hand ? `${hand.handNo}-${hand.street}` : '';
+  useEffect(() => setPre(null), [streetKey]);
 
   const key = legal ? `${hand!.handNo}-${hand!.street}-${hand!.currentBet}-${legal.minTo}` : '';
   useEffect(() => {
@@ -51,7 +54,39 @@ export function ActionBar({ view, emit, skew, onError }: { view: TableView; emit
     ] as [string, number][];
   }, [legal, view]);
 
+  // Fire a pre-selected action as soon as it's our turn.
+  useEffect(() => {
+    if (!legal || !pre || !hand) return;
+    const action = legal.canCheck ? { type: 'check' as const } : pre === 'callAny' ? { type: 'call' as const } : { type: 'fold' as const };
+    setPre(null);
+    void emit('player:action', { handNo: hand.handNo, action }).then((r) => {
+      if (!r.ok) onError(r.error);
+    });
+  }, [legal]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!hand || mySeat === null) return null;
+  const me = view.seats[mySeat];
+  if (!legal && hand.phase === 'betting' && me?.inHand && !me.allIn) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl gap-2">
+        {(
+          [
+            ['checkFold', 'Check / Fold'],
+            ['callAny', 'Call any'],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            onClick={() => setPre(pre === k ? null : k)}
+            className={`btn h-11 flex-1 ring-1 ring-inset ${pre === k ? 'bg-gold/15 text-gold ring-gold/50' : 'bg-white/[0.04] text-white/60 ring-white/10 hover:bg-white/[0.08]'}`}
+          >
+            <span className={`grid h-4 w-4 place-items-center rounded border ${pre === k ? 'border-gold bg-gold text-black' : 'border-white/30'}`}>{pre === k ? '✓' : ''}</span>
+            {label}
+          </button>
+        ))}
+      </div>
+    );
+  }
 
   // Run it twice vote
   if (hand.phase === 'runItTwice' && hand.ritPending.includes(mySeat)) {

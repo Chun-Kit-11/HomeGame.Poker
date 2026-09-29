@@ -44,7 +44,16 @@ async function main() {
   io = new Server(server, { serveClient: false, maxHttpBufferSize: 16_384 });
   attachGateway(io, manager, (cookie) => userFromToken(tokenFromCookieHeader(cookie)));
 
-  server.listen(env.port, () => {
+  // Housekeeping: unload idle rooms (their state is in the database) and purge expired logins.
+  const housekeeping = setInterval(() => {
+    manager.sweep();
+    db()
+      .session.deleteMany({ where: { expiresAt: { lt: new Date() } } })
+      .catch((err) => console.error('[housekeeping]', err));
+  }, 10 * 60_000);
+  housekeeping.unref();
+
+  server.listen(env.port, env.host, () => {
     console.log(`Poker server ready on http://localhost:${env.port}`);
   });
 

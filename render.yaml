@@ -1,0 +1,30 @@
+# Render Blueprint: creates the database and the web service in one go.
+# In Render: New + -> Blueprint -> pick this repository -> Apply.
+databases:
+  - name: poker-db
+    databaseName: poker
+    user: poker
+    # Paid plan: data is kept and backed up. (Free databases expire after a while.)
+    plan: basic-256mb
+
+services:
+  - type: web
+    name: home-game-poker
+    runtime: node
+    # Starter or above: free instances sleep when idle, which disconnects everyone at the table.
+    plan: starter
+    # IMPORTANT: game state lives in memory, so run exactly one instance (no autoscaling).
+    numInstances: 1
+    buildCommand: npm ci && npm run build
+    # Applies any new database migrations, then starts the combined web + game server.
+    startCommand: npm run db:deploy && npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: poker-db
+          property: connectionString

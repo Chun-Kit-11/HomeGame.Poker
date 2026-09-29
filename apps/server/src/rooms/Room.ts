@@ -1116,6 +1116,14 @@ export class Room {
     const line = { userId, type, chips, amountMinor: minor };
     this.ledger.push(line);
     this.persist((p) => p.addLedger(this.id, line));
+    // Keep the recovery snapshot in step with the ledger so a crash can't lose chips.
+    if (this.status !== 'ENDED') this.saveSnapshot();
+  }
+
+  /** True when nobody is connected and no hand is running (safe to unload from memory). */
+  isIdle(): boolean {
+    const anyone = [...this.members.values()].some((m) => m.sockets > 0);
+    return !anyone && (!this.hand || this.hand.phase === 'complete') && !this.starting;
   }
 
   // -------------------------------------------------------------------------
@@ -1138,6 +1146,10 @@ export class Room {
     const snap = this.snapshot();
     const status = this.status;
     this.persist((p) => p.saveSnapshot(this.id, status, snap));
+  }
+
+  saveSnapshotNow() {
+    if (this.status !== 'ENDED') this.saveSnapshot();
   }
 
   snapshot(): RoomSnapshot {
