@@ -359,6 +359,7 @@ export class TournamentRoom extends Room {
   protected override results() {
     return {
       stats: this.statsView(),
+      ledger: this.ledgerSummary(),
       tournament: {
         entrants: this.t.entrants.length,
         prizePool: this.t.prizePool,

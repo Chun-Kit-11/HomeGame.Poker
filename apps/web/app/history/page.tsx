@@ -46,9 +46,16 @@ export default function HistoryPage() {
     [cursor, filters],
   );
 
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    if (me) load(true);
-  }, [me, filters]); // eslint-disable-line react-hooks/exhaustive-deps
+    const room = new URLSearchParams(window.location.search).get('room');
+    if (room) setFilters((f) => ({ ...f, room: room.toUpperCase() }));
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (me && ready) load(true);
+  }, [me, filters, ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!me) return <main className="grid min-h-dvh place-items-center text-white/50">Loading…</main>;
   return (

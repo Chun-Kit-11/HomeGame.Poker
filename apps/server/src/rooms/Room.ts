@@ -27,7 +27,10 @@ import {
   type SeatStatus,
   type SeatView,
   type TableView,
+  computeBalances,
+  findDiscrepancies,
   sanitizeChat,
+  settle,
 } from '@poker/shared';
 import type { Clock } from '../clock';
 import type { LedgerType, Persistence, RoomStatusValue } from '../persistence';
@@ -508,7 +511,24 @@ export class Room {
 
   /** Final results stored with the room (extended by ledger/tournament modes). */
   protected results(): unknown {
-    return { stats: this.statsView() };
+    return { stats: this.statsView(), ledger: this.ledgerSummary() };
+  }
+
+  /** Ledger mode: each player's net, the minimum transfers to settle, and any discrepancy. */
+  protected ledgerSummary() {
+    const l = this.config.ledger;
+    if (this.config.moneyMode !== 'LEDGER' || !l) return null;
+    const { balances, rounded } = computeBalances(this.ledger, this.config.gameMode, l.ratio);
+    const discrepancies = findDiscrepancies(balances, this.config.gameMode);
+    const named = balances.map((b) => ({ ...b, username: this.usernames.get(b.userId) ?? '?' }));
+    return {
+      currency: l.currency,
+      ratio: l.ratio,
+      balances: named,
+      transfers: discrepancies.length ? [] : settle(balances),
+      discrepancies,
+      rounded,
+    };
   }
 
   // -------------------------------------------------------------------------
