@@ -215,8 +215,26 @@ function Room({ table }: { table: ReturnType<typeof useTable> }) {
           <button className="icon-btn" title="Hand history" aria-label="Hand history" onClick={() => setHistoryOpen(true)}>
             <HistoryIcon className="h-[18px] w-[18px]" />
           </button>
-          <button className="icon-btn w-11 font-display text-xs font-extrabold text-white/80" title="Show amounts in chips or big blinds" onClick={() => setUnit(unit === 'bb' ? 'chips' : 'bb')}>
-            {unit === 'bb' ? 'BB' : '123'}
+          <button
+            className="pill relative flex h-10 shrink-0 items-center rounded-xl p-1 font-display text-[11px] font-extrabold"
+            title="Show stacks and bets in chips or big blinds"
+            aria-label={`Showing amounts in ${unit === 'bb' ? 'big blinds' : 'chips'}. Tap to switch.`}
+            onClick={() => {
+              const next = unit === 'bb' ? 'chips' : 'bb';
+              setUnit(next);
+              setToast(next === 'bb' ? 'Stacks and bets shown in big blinds' : 'Stacks and bets shown in chips');
+            }}
+          >
+            {(
+              [
+                ['chips', '123'],
+                ['bb', 'BB'],
+              ] as const
+            ).map(([k, label]) => (
+              <span key={k} className={`grid h-full w-8 place-items-center rounded-lg transition ${unit === k ? 'bg-gold text-black' : 'text-white/50'}`}>
+                {label}
+              </span>
+            ))}
           </button>
           <button
             className="icon-btn hidden sm:inline-grid"

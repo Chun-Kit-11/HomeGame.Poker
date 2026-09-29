@@ -40,7 +40,7 @@ export function SettingsPanel({ onMutedChange }: { onMutedChange?: (m: boolean) 
       </section>
 
       <section>
-        <h3 className="eyebrow mb-2">Show amounts in</h3>
+        <h3 className="eyebrow mb-2">Show stacks &amp; bets in</h3>
         <div className="flex rounded-xl bg-black/30 p-1 ring-1 ring-inset ring-white/10">
           {(
             [
@@ -53,6 +53,7 @@ export function SettingsPanel({ onMutedChange }: { onMutedChange?: (m: boolean) 
             </button>
           ))}
         </div>
+        <p className="mt-1.5 text-[11px] text-white/40">Applies to every stack, bet, pot and bet button on your screen only. Tap 123 / BB at the top to switch quickly.</p>
       </section>
 
       <section className="flex items-center justify-between">

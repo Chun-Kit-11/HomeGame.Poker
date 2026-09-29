@@ -205,10 +205,12 @@ export function Table({
               : anchor.y < 15
                 ? pos({ x: anchor.x, y: anchor.y + 12 })
                 : anchor.x < 40
-                  ? pos({ x: anchor.x + 24, y: anchor.y + 2 })
+                  ? pos(anchor.y < 30 ? { x: anchor.x + 6, y: anchor.y + 9 } : { x: anchor.x + 14, y: anchor.y + 2 })
                   : anchor.x > 60
-                    ? pos({ x: anchor.x - 24, y: anchor.y + 2 })
+                    ? pos(anchor.y < 30 ? { x: anchor.x - 6, y: anchor.y + 9 } : { x: anchor.x - 14, y: anchor.y + 2 })
                     : pos({ x: 50, y: anchor.y - 12 });
+          // Side seats in portrait: the bet grows towards the middle so wide amounts never cover the name plate
+          const betShift = portrait && !isHeroSlot && anchor.y >= 15 ? (anchor.x < 40 ? '0%' : anchor.x > 60 ? '-100%' : '-50%') : '-50%';
           const dealerAt = !portrait
             ? along(64, 34)
             : anchor.y < 15
@@ -247,7 +249,7 @@ export function Table({
                 </div>
               )}
               {bet > 0 && (
-                <div className="chip-in absolute z-20 -translate-x-1/2 -translate-y-1/2" style={betAt}>
+                <div className="chip-in absolute z-20" style={{ ...betAt, transform: `translate(${betShift}, -50%)` }}>
                   <div className="flex items-center gap-1.5 rounded-full bg-black/55 py-0.5 pl-0.5 pr-2.5 text-[12px] font-bold tabular text-white ring-1 ring-inset ring-white/10">
                     <Chip className="h-[18px] w-[18px]" color={bet >= view.room.bigBlind * 10 ? '#1d4ed8' : bet >= view.room.bigBlind * 3 ? '#15803d' : '#c8202e'} />
                     {fmt(bet)}
