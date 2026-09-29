@@ -1,6 +1,6 @@
 // Database schema for the poker app.
 // Live game state is held in memory by the server; the database stores
-// accounts, rooms (with a between-hands snapshot for crash recovery),
+// guest players, rooms (with a between-hands snapshot for crash recovery),
 // full hand histories, and the money ledger.
 
 generator client {
@@ -14,10 +14,11 @@ datasource db {
 
 model User {
   id            String   @id @default(cuid())
-  /// Display name as typed at registration
+  /// Name shown at the table (players have no accounts; names need not be unique)
   username      String
-  /// Lower-cased username, used for uniqueness and login
+  /// Random unique guest id, e.g. "guest_x7Yq..."
   usernameLower String   @unique
+  /// Unused (always ""): players are guests without passwords
   passwordHash  String
   createdAt     DateTime @default(now())
 

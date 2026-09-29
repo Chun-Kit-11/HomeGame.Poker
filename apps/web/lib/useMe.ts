@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchMe, type Me } from './api';
 
-/** Loads the current user; redirects to /login (preserving the return path) if required. */
+/**
+ * Loads the current player. If required and there is none yet, sends them to the
+ * start page to pick a name (keeping the room code when they came from an invite link).
+ */
 export function useMe(required = true) {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const router = useRouter();
@@ -14,8 +17,8 @@ export function useMe(required = true) {
         if (!alive) return;
         setMe(u);
         if (!u && required) {
-          const next = window.location.pathname + window.location.search;
-          router.replace(`/login?next=${encodeURIComponent(next)}`);
+          const room = window.location.pathname.match(/^\/room\/([^/]+)/);
+          router.replace(room ? `/?join=${encodeURIComponent(room[1])}` : '/');
         }
       })
       .catch(() => alive && setMe(null));

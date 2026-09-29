@@ -8,7 +8,8 @@ import { TournamentFields } from './TournamentFields';
 type Mode = 'CASH' | 'TOURNAMENT';
 type Money = 'PLAY' | 'LEDGER';
 
-export function CreateRoomForm() {
+/** `beforeCreate` runs first (e.g. to save the player's name) and may throw to stop. */
+export function CreateRoomForm({ beforeCreate }: { beforeCreate?: () => Promise<void> }) {
   const router = useRouter();
   const [config, setConfig] = useState<RoomConfig>(defaultRoomConfig('CASH', 'PLAY'));
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +26,7 @@ export function CreateRoomForm() {
     setBusy(true);
     setError(null);
     try {
+      await beforeCreate?.();
       const { code } = await api<{ code: string }>('/rooms', { body: config });
       router.push(`/room/${code}`);
     } catch (err) {
@@ -39,12 +41,7 @@ export function CreateRoomForm() {
   const money = (v: string) => Math.round(Number(v || '0') * 100);
 
   return (
-    <form onSubmit={submit} className="card-panel flex flex-col gap-5">
-      <div>
-        <h2 className="text-xl font-bold">Host a new table</h2>
-        <p className="text-sm text-white/50">Private and invite-only. You can change blinds and approve players as you go.</p>
-      </div>
-
+    <form onSubmit={submit} className="flex flex-col gap-5">
       <Field label="Table name">
         <input className="input" value={config.name} maxLength={40} onChange={(e) => setConfig({ ...config, name: e.target.value })} />
       </Field>

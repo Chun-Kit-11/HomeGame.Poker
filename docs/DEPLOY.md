@@ -7,7 +7,7 @@ You will end up with an address like `https://home-game-poker.onrender.com` to s
 
 | Piece | What it does | Render plan |
 |---|---|---|
-| **PostgreSQL database** (`poker-db`) | Stores accounts, rooms, hand histories and the ledger | Basic (paid, a few US$/month) |
+| **PostgreSQL database** (`poker-db`) | Stores player names, rooms, hand histories and the ledger | Basic (paid, a few US$/month) |
 | **Web service** (`home-game-poker`) | Runs the website *and* the real-time game server | Starter (paid, a few US$/month) |
 
 Why paid plans? Render's free web service goes to sleep after 15 minutes without visitors, which disconnects everyone at the table. Free databases are also deleted after a trial period. Check <https://render.com/pricing> for today's prices.
@@ -43,8 +43,8 @@ That's it: the database connection, secure cookies and Node version are all set 
 ## 4. Try it
 
 1. Open the service and click its URL (`https://….onrender.com`).
-2. **Sign up**: the first account you create is just a normal account (anyone with the link can register).
-3. Create a room, then send the invite link (tap the room code at the top of the table to copy it) to a friend.
+2. Type a name and tap **Create a room**. There are no accounts: anyone with a room code can join by typing a name.
+3. Send the invite link (tap the room code at the top of the table to copy it) to a friend.
 4. Test on your phone: the site works in mobile browsers, and you can use **Add to Home Screen**.
 
 ## 5. Updating the site later
@@ -66,7 +66,7 @@ HTTPS certificates are automatic.
 | Problem | Fix |
 |---|---|
 | Build fails at `npm ci` | Make sure `package-lock.json` is committed (it is in this repo). |
-| "Please log in again" in a loop | `COOKIE_SECURE` must be `true` on Render (HTTPS) and `false` for local `http://`. |
+| "Enter your name to join this table" in a loop | `COOKIE_SECURE` must be `true` on Render (HTTPS) and `false` for local `http://`. |
 | Players see "Reconnecting…" | Check the service is **Live** and on a paid plan (free instances sleep). |
 | Tables behave oddly after scaling | Keep **exactly one instance**: game state is held in memory by that one server. |
 | Database errors in logs | Open **poker-db** → check it is available; the web service gets `DATABASE_URL` from it automatically. |

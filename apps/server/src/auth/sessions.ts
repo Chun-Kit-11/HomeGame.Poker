@@ -4,7 +4,8 @@ import { db } from '../db';
 import { env } from '../env';
 
 export const SESSION_COOKIE = 'poker_sid';
-const SESSION_DAYS = 30;
+// Long-lived: the cookie is the player's only identity on this device.
+const SESSION_DAYS = 365;
 
 export interface AuthUser {
   id: string;
@@ -42,10 +43,6 @@ export async function userFromToken(token: string | undefined): Promise<AuthUser
   return session.user;
 }
 
-export async function destroySession(token: string | undefined): Promise<void> {
-  if (!token) return;
-  await db().session.deleteMany({ where: { tokenHash: sha256(token) } });
-}
 
 export function tokenFromCookieHeader(header: string | undefined): string | undefined {
   if (!header) return undefined;
@@ -59,15 +56,5 @@ export function sessionCookie(token: string): string {
     secure: env.cookieSecure,
     path: '/',
     maxAge: SESSION_DAYS * 86_400,
-  });
-}
-
-export function clearedSessionCookie(): string {
-  return serialize(SESSION_COOKIE, '', {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: env.cookieSecure,
-    path: '/',
-    maxAge: 0,
   });
 }

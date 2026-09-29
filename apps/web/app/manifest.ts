@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Home Game · Private Poker',
     short_name: 'Home Game',
     description: "Private No-Limit Hold'em with friends",
-    start_url: '/lobby',
+    start_url: '/',
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#030303',

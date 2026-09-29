@@ -39,7 +39,7 @@ export function useTable(code: string) {
     });
     s.on('disconnect', () => setConnected(false));
     s.on('connect_error', (err) => {
-      if (err.message === 'unauthorized') setFatal('Please log in again');
+      if (err.message === 'unauthorized') setFatal('Enter your name to join this table');
     });
     s.on('table:state', (v: TableView) => {
       meRef.current = v.me.userId;

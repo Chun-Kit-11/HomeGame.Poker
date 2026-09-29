@@ -33,7 +33,7 @@ export default function SessionsPage() {
   return (
     <main className="mx-auto max-w-2xl space-y-4 px-4 pb-16 pt-5">
       <PageHeader
-        back="/lobby"
+        back="/"
         title="Sessions"
         subtitle="Results and settle-ups"
         actions={

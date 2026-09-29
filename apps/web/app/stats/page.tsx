@@ -33,7 +33,7 @@ export default function StatsPage() {
 
   return (
     <main className="mx-auto max-w-3xl space-y-4 px-4 pb-16 pt-5">
-      <PageHeader back="/lobby" title="My stats" subtitle={`${chips(s.hands)} hand${s.hands === 1 ? '' : 's'} played`} actions={<Link href="/history" className="btn-secondary">History</Link>} />
+      <PageHeader back="/" title="My stats" subtitle={`${chips(s.hands)} hand${s.hands === 1 ? '' : 's'} played`} actions={<Link href="/history" className="btn-secondary">History</Link>} />
       {s.hands === 0 ? (
         <p className="card-panel text-center text-white/50">Play some hands to see your stats.</p>
       ) : (

@@ -62,7 +62,7 @@ export default function HistoryPage() {
   return (
     <main className="mx-auto max-w-3xl space-y-4 px-4 pb-16 pt-5">
       <PageHeader
-        back="/lobby"
+        back="/"
         title="Hand history"
         subtitle="Every hand you played, ready to replay"
         actions={

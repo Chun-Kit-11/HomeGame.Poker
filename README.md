@@ -30,8 +30,8 @@ npm run db:migrate                 # create the database tables
 npm run dev                        # http://localhost:3000
 ```
 
-* Open <http://localhost:3000> and sign up.
-* To play against yourself, use a second browser or a private window as another user.
+* Open <http://localhost:3000>, type a name, and create a room. There are no accounts or passwords.
+* To play against yourself, use a second browser or a private window as another player.
 * Phones on the same Wi-Fi can open `http://<your-computer's-IP>:3000`. The dev server listens on all interfaces.
 
 Production mode locally: `npm run build && npm start`.
@@ -60,7 +60,7 @@ What the tests prove:
 
 ## How to check each phase by hand
 
-1. **Setup & auth.** Sign up, log out, log in. A wrong password is rejected; a duplicate username is rejected.
+1. **Setup & names.** Type a name and create a room; open the room code in a private window, type another name and join. Reloading keeps you as the same player (a cookie on that device remembers you).
 2. **Rules engine.** Run `npm run test:engine`.
 3. **Realtime & cash games.**
    1. Create a cash room and open the invite link in a second browser.

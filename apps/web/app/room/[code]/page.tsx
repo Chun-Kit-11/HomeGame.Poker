@@ -44,8 +44,8 @@ function Fatal({ message }: { message: string }) {
     <main className="grid min-h-dvh place-items-center p-6 text-center">
       <div className="card-panel max-w-sm space-y-4">
         <p className="text-lg font-semibold">{message}</p>
-        <Link className="btn-primary" href="/lobby">
-          Back to lobby
+        <Link className="btn-primary" href="/">
+          Back to start
         </Link>
       </div>
     </main>
@@ -185,7 +185,7 @@ function Room({ table }: { table: ReturnType<typeof useTable> }) {
     >
       <div className="flex min-h-0 flex-1 flex-col">
         <header className="flex items-center gap-2 px-3 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))]">
-          <Link href="/lobby" className="icon-btn" aria-label="Lobby">
+          <Link href="/" className="icon-btn" aria-label="Leave to start page">
             <ChevronLeft />
           </Link>
           <div className="hidden min-w-0 flex-1 pl-1 min-[440px]:block">

@@ -61,7 +61,7 @@ function VerifyInner() {
 
   return (
     <main className="mx-auto max-w-3xl space-y-4 px-4 pb-16 pt-5">
-      <PageHeader back={hand ? `/history/${hand.id}` : '/lobby'} title="Verify a hand" subtitle="Check the shuffle yourself: nothing to trust" />
+      <PageHeader back={hand ? `/history/${hand.id}` : '/'} title="Verify a hand" subtitle="Check the shuffle yourself: nothing to trust" />
 
       <section className="card-panel space-y-2 text-sm text-white/70">
         <p>
