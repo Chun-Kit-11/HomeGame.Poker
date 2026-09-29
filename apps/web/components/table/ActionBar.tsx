@@ -56,13 +56,12 @@ export function ActionBar({ view, emit, skew, onError }: { view: TableView; emit
   // Run it twice vote
   if (hand.phase === 'runItTwice' && hand.ritPending.includes(mySeat)) {
     return (
-      <Bar>
-        <div className="flex-1 text-sm">Run it twice?{secs !== null && <span className="ml-2 text-white/50">{secs}s</span>}</div>
-        <button className="btn-secondary" disabled={busy} onClick={() => send({ type: 'runItTwice', agree: false })}>
-          Once
+      <Bar title="Everyone is all-in" hint="Deal the rest of the board twice and split the pot?" secs={secs}>
+        <button className="btn-secondary h-14 flex-1" disabled={busy} onClick={() => send({ type: 'runItTwice', agree: false })}>
+          Run once
         </button>
-        <button className="btn-primary" disabled={busy} onClick={() => send({ type: 'runItTwice', agree: true })}>
-          Twice
+        <button className="btn-primary h-14 flex-1" disabled={busy} onClick={() => send({ type: 'runItTwice', agree: true })}>
+          Run it twice
         </button>
       </Bar>
     );
@@ -71,12 +70,11 @@ export function ActionBar({ view, emit, skew, onError }: { view: TableView; emit
   // Show or muck a losing hand
   if (hand.phase === 'showdown' && hand.showdownAwaiting === mySeat) {
     return (
-      <Bar>
-        <div className="flex-1 text-sm">Your hand can&apos;t win.{secs !== null && <span className="ml-2 text-white/50">{secs}s</span>}</div>
-        <button className="btn-secondary" disabled={busy} onClick={() => send({ type: 'show' })}>
-          Show
+      <Bar title="Showdown" hint="Your hand can't win this pot." secs={secs}>
+        <button className="btn-secondary h-14 flex-1" disabled={busy} onClick={() => send({ type: 'show' })}>
+          Show cards
         </button>
-        <button className="btn-primary" disabled={busy} onClick={() => send({ type: 'muck' })}>
+        <button className="btn-primary h-14 flex-1" disabled={busy} onClick={() => send({ type: 'muck' })}>
           Muck
         </button>
       </Bar>
@@ -86,71 +84,81 @@ export function ActionBar({ view, emit, skew, onError }: { view: TableView; emit
   if (!legal) return null;
   const aggressive = legal.canBet || legal.canRaise;
   const callIsAllIn = legal.canCall && legal.callAmount >= view.seats[mySeat]!.stack;
+  const allIn = amount === legal.maxTo;
 
   return (
-    <div className="w-full">
+    <div className="mx-auto w-full max-w-xl">
       {raiseOpen && aggressive && (
-        <div className="mx-auto mb-2 flex max-w-xl flex-col gap-2 rounded-xl bg-black/70 p-3">
-          <div className="grid grid-cols-4 gap-2">
+        <div className="slide-up mb-2 space-y-3 rounded-2xl bg-[#0b0f0e]/92 p-3 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.9)] ring-1 ring-inset ring-white/10 backdrop-blur-xl">
+          <div className="grid grid-cols-4 gap-1.5">
             {quick.map(([label, to]) => (
-              <button key={label} className="btn-secondary px-1 py-1.5 text-xs" onClick={() => setAmount(to)}>
+              <button
+                key={label}
+                className={`h-9 rounded-lg text-xs font-semibold ring-1 ring-inset transition ${amount === to ? 'bg-gold/15 text-gold ring-gold/50' : 'bg-white/[0.05] text-white/80 ring-white/10 hover:bg-white/10'}`}
+                onClick={() => setAmount(to)}
+              >
                 {label}
               </button>
             ))}
           </div>
           <div className="flex items-center gap-3">
-            <button className="btn-secondary px-3 py-1" onClick={() => setAmount((a) => Math.max(legal.minTo, a - (view.room.bigBlind || 1)))}>
+            <button className="icon-btn h-9 w-9" onClick={() => setAmount((a) => Math.max(legal.minTo, a - (view.room.bigBlind || 1)))}>
               −
             </button>
             <input
               type="range"
-              className="flex-1 accent-emerald-400"
+              className="flex-1"
               min={legal.minTo}
               max={legal.maxTo}
               step={1}
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
             />
-            <button className="btn-secondary px-3 py-1" onClick={() => setAmount((a) => Math.min(legal.maxTo, a + (view.room.bigBlind || 1)))}>
+            <button className="icon-btn h-9 w-9" onClick={() => setAmount((a) => Math.min(legal.maxTo, a + (view.room.bigBlind || 1)))}>
               +
             </button>
+            <input
+              className="input h-9 w-24 text-center font-bold tabular"
+              type="number"
+              inputMode="numeric"
+              min={legal.minTo}
+              max={legal.maxTo}
+              value={amount}
+              onChange={(e) => setAmount(Math.floor(Number(e.target.value)))}
+            />
           </div>
-          <input
-            className="input text-center font-bold"
-            type="number"
-            inputMode="numeric"
-            min={legal.minTo}
-            max={legal.maxTo}
-            value={amount}
-            onChange={(e) => setAmount(Math.floor(Number(e.target.value)))}
-          />
+          <div className="flex justify-between text-[11px] text-white/40">
+            <span>Min {chips(legal.minTo)}</span>
+            <span>Max {chips(legal.maxTo)}</span>
+          </div>
         </div>
       )}
-      <Bar>
-        <div className="hidden w-16 text-center text-xs text-white/60 sm:block">{secs !== null && `${secs}s`}</div>
-        <button className="btn-danger flex-1" disabled={busy} onClick={() => send({ type: 'fold' })}>
+      <Bar title="Your turn" secs={secs}>
+        <button className="btn h-14 flex-1 bg-white/[0.04] text-red-300 ring-1 ring-inset ring-red-400/30 hover:bg-red-500/10" disabled={busy} onClick={() => send({ type: 'fold' })}>
           Fold
         </button>
         {legal.canCheck ? (
-          <button className="btn-secondary flex-1" disabled={busy} onClick={() => send({ type: 'check' })}>
+          <button className="btn h-14 flex-1 bg-white/[0.1] text-white ring-1 ring-inset ring-white/15 hover:bg-white/[0.15]" disabled={busy} onClick={() => send({ type: 'check' })}>
             Check
           </button>
         ) : (
-          <button className="btn-secondary flex-1" disabled={busy} onClick={() => send({ type: 'call' })}>
-            {callIsAllIn ? 'All-in' : 'Call'} {chips(legal.callAmount)}
+          <button className="btn h-14 flex-1 flex-col gap-0 bg-white/[0.1] text-white ring-1 ring-inset ring-white/15 hover:bg-white/[0.15]" disabled={busy} onClick={() => send({ type: 'call' })}>
+            <span>{callIsAllIn ? 'All-in' : 'Call'}</span>
+            <span className="text-xs font-bold tabular text-gold">{chips(legal.callAmount)}</span>
           </button>
         )}
         {aggressive &&
           (raiseOpen ? (
             <button
-              className="btn-primary flex-1"
+              className="btn-primary h-14 flex-1 flex-col gap-0"
               disabled={busy || amount < legal.minTo || amount > legal.maxTo}
-              onClick={() => send(amount === legal.maxTo ? { type: 'allIn' } : { type: legal.canBet ? 'bet' : 'raise', to: amount })}
+              onClick={() => send(allIn ? { type: 'allIn' } : { type: legal.canBet ? 'bet' : 'raise', to: amount })}
             >
-              {amount === legal.maxTo ? 'All-in' : legal.canBet ? 'Bet' : 'Raise to'} {chips(amount)}
+              <span>{allIn ? 'All-in' : legal.canBet ? 'Bet' : 'Raise to'}</span>
+              <span className="text-xs font-bold tabular">{chips(amount)}</span>
             </button>
           ) : (
-            <button className="btn-primary flex-1" disabled={busy} onClick={() => setRaiseOpen(true)}>
+            <button className="btn-primary h-14 flex-1" disabled={busy} onClick={() => setRaiseOpen(true)}>
               {legal.canBet ? 'Bet' : 'Raise'}
             </button>
           ))}
@@ -159,6 +167,18 @@ export function ActionBar({ view, emit, skew, onError }: { view: TableView; emit
   );
 }
 
-function Bar({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto flex w-full max-w-xl items-center gap-2 rounded-xl bg-emerald-950/90 p-2 ring-2 ring-emerald-400/60">{children}</div>;
+function Bar({ children, title, hint, secs }: { children: React.ReactNode; title: string; hint?: string; secs: number | null }) {
+  return (
+    <div className="mx-auto w-full max-w-xl rounded-2xl bg-[#0b0f0e]/92 p-2 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.9),0_0_0_1px_rgba(52,211,153,0.35)] backdrop-blur-xl">
+      <div className="flex items-center justify-between px-1.5 pb-2 pt-0.5 text-xs">
+        <span className="flex items-center gap-2 font-semibold text-emerald-300">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
+          {title}
+          {hint && <span className="font-normal text-white/50">{hint}</span>}
+        </span>
+        {secs !== null && <span className={`font-mono tabular ${secs <= 5 ? 'text-red-300' : 'text-white/50'}`}>{secs}s</span>}
+      </div>
+      <div className="flex gap-2">{children}</div>
+    </div>
+  );
 }

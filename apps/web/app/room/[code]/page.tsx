@@ -10,6 +10,8 @@ import { SeatDialog } from '@/components/table/SeatDialog';
 import { StatsPanel } from '@/components/table/StatsPanel';
 import { Table } from '@/components/table/Table';
 import { Standings, TournamentBar } from '@/components/table/TournamentBar';
+import { Chat as ChatIcon, ChevronLeft, Copy, Settings, Volume, VolumeOff } from '@/components/ui/Icons';
+import { Loading } from '@/components/ui/PageHeader';
 import { chips } from '@/lib/format';
 import { isMuted, playSound, setMuted } from '@/lib/sounds';
 import { useMe } from '@/lib/useMe';
@@ -57,8 +59,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   if (fatal) {
     return (
       <main className="grid min-h-dvh place-items-center p-6 text-center">
-        <div className="space-y-4">
-          <p className="text-lg">{fatal}</p>
+        <div className="card-panel max-w-sm space-y-4">
+          <p className="text-lg font-semibold">{fatal}</p>
           <Link className="btn-primary" href="/lobby">
             Back to lobby
           </Link>
@@ -66,7 +68,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       </main>
     );
   }
-  if (!me || !view) return <main className="grid min-h-dvh place-items-center text-white/50">Connecting…</main>;
+  if (!me || !view) return <Loading label="Joining the table" />;
 
   const mySeat = view.me.seat !== null ? view.seats[view.me.seat] : null;
   const myCards = mySeat && Array.isArray(mySeat.cards) ? mySeat.cards : null;
@@ -75,11 +77,15 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
   const panel = (
     <div className="flex h-full flex-col">
-      <div className="flex border-b border-white/10 text-sm">
+      <div className="m-2 flex rounded-xl bg-black/30 p-1 text-sm ring-1 ring-inset ring-white/[0.06]">
         {(['chat', 'stats', ...(view.me.isHost ? ['host'] : [])] as Tab[]).map((t) => (
-          <button key={t} className={`flex-1 py-2 capitalize ${tab === t ? 'border-b-2 border-emerald-400 font-bold' : 'text-white/60'}`} onClick={() => setTab(t)}>
+          <button
+            key={t}
+            className={`flex-1 rounded-lg py-1.5 font-semibold capitalize transition ${tab === t ? 'bg-white/10 text-white shadow' : 'text-white/50 hover:text-white/80'}`}
+            onClick={() => setTab(t)}
+          >
             {t}
-            {t === 'host' && view.requests.length > 0 && <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs text-black">{view.requests.length}</span>}
+            {t === 'host' && view.requests.length > 0 && <span className="ml-1.5 rounded-full bg-gold px-1.5 text-[11px] font-bold text-black">{view.requests.length}</span>}
           </button>
         ))}
       </div>
@@ -94,53 +100,59 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   return (
     <main className="flex h-dvh flex-col overflow-hidden lg:flex-row">
       <div className="flex min-h-0 flex-1 flex-col">
-        <header className="flex items-center gap-2 px-3 py-2 text-sm">
-          <Link href="/lobby" className="text-white/60">
-            ←
+        <header className="flex items-center gap-2 px-3 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))]">
+          <Link href="/lobby" className="icon-btn" aria-label="Lobby">
+            <ChevronLeft />
           </Link>
-          <div className="min-w-0 flex-1">
-            <div className="truncate font-bold">{view.room.name}</div>
-            <div className="text-xs text-white/50">
-              {view.room.gameMode === 'CASH' ? 'Cash' : 'Tournament'} · Blinds {chips(view.room.smallBlind)}/{chips(view.room.bigBlind)}
-              {view.room.ante > 0 && ` · BB ante ${chips(view.room.ante)}`}
+          <div className="min-w-0 flex-1 pl-1">
+            <div className="truncate font-display text-[15px] font-bold leading-tight">{view.room.name}</div>
+            <div className="truncate text-xs text-white/50">
+              <span className="text-gold/90">
+                {chips(view.room.smallBlind)}/{chips(view.room.bigBlind)}
+                {view.room.ante > 0 && ` · ante ${chips(view.room.ante)}`}
+              </span>
+              {' · '}
+              {view.room.gameMode === 'CASH' ? 'Cash' : 'Tournament'}
               {view.room.moneyMode === 'LEDGER' && ' · Ledger'}
             </div>
           </div>
           <button
-            className="rounded-md bg-white/10 px-2 py-1 font-mono text-xs"
+            className="pill h-10 gap-2 rounded-xl px-3 font-mono text-[13px] font-semibold tracking-wider text-white"
             title="Copy invite link"
             onClick={() => {
               navigator.clipboard?.writeText(inviteUrl).then(() => setToast('Invite link copied'));
             }}
           >
-            {view.room.code} ⧉
+            <span className={`h-2 w-2 rounded-full ${connected ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-red-500'}`} />
+            {view.room.code}
+            <Copy className="h-3.5 w-3.5 text-white/50" />
           </button>
-          <span className={`h-2 w-2 rounded-full ${connected ? 'bg-emerald-400' : 'bg-red-500'}`} title={connected ? 'Connected' : 'Reconnecting…'} />
           <button
-            className="text-lg"
+            className="icon-btn"
             title={muted ? 'Unmute' : 'Mute'}
             onClick={() => {
               setMuted(!muted);
               setMutedState(!muted);
             }}
           >
-            {muted ? '🔇' : '🔊'}
+            {muted ? <VolumeOff className="h-[18px] w-[18px]" /> : <Volume className="h-[18px] w-[18px]" />}
           </button>
-          <button className="relative rounded-md bg-white/10 px-2 py-1 lg:hidden" onClick={() => setPanelOpen(true)}>
-            💬{unread > 0 && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-amber-400" />}
+          <button className="icon-btn relative lg:hidden" onClick={() => setPanelOpen(true)} aria-label="Chat and more">
+            {view.me.isHost ? <Settings className="h-[18px] w-[18px]" /> : <ChatIcon className="h-[18px] w-[18px]" />}
+            {(unread > 0 || (view.me.isHost && view.requests.length > 0)) && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-gold ring-2 ring-[#07090a]" />}
           </button>
         </header>
 
         {view.tournament && <TournamentBar view={view} skew={skew} />}
-        {!connected && <div className="bg-red-900/60 py-1 text-center text-xs">Reconnecting… your seat is held.</div>}
-        {view.room.status === 'PAUSED' && <div className="bg-amber-900/50 py-1 text-center text-xs">Game paused by the host</div>}
+        {!connected && <Banner tone="red">Reconnecting… your seat is held.</Banner>}
+        {view.room.status === 'PAUSED' && <Banner tone="amber">The host has paused the game</Banner>}
         {ended && (
-          <div className="bg-sky-900/60 py-2 text-center text-sm">
-            Session ended.{' '}
-            <Link className="underline" href={`/sessions/${view.room.code}`}>
+          <Banner tone="sky">
+            This session has ended.{' '}
+            <Link className="font-semibold underline" href={`/sessions/${view.room.code}`}>
               See results
             </Link>
-          </div>
+          </Banner>
         )}
 
         <div className="min-h-0 flex-1 px-1">
@@ -157,7 +169,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
         <footer className="space-y-2 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {view.me.isHost && view.room.status === 'OPEN' && (
-            <button className="btn-primary w-full" onClick={async () => {
+            <button className="btn-primary h-12 w-full text-base" onClick={async () => {
               const r = await emit('host:start', {});
               if (!r.ok) setToast(r.error);
             }}>
@@ -165,7 +177,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             </button>
           )}
           {view.me.pendingRequest && (
-            <div className="flex items-center justify-between rounded-lg bg-white/5 p-2 text-sm">
+            <div className="flex items-center justify-between rounded-xl bg-white/[0.05] px-3 py-2.5 text-sm ring-1 ring-inset ring-white/10">
               <span>Waiting for the host to approve your request…</span>
               {view.me.pendingRequest.kind === 'buyIn' && (
                 <button className="text-xs underline" onClick={() => emit('seat:cancel', {})}>
@@ -184,27 +196,27 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           )}
           <ActionBar view={view} emit={emit} skew={skew} onError={setToast} />
           {mySeat && !legal && (
-            <button className="w-full py-1 text-xs text-white/50 underline" onClick={() => setMenuOpen(true)}>
-              Seat options (sit out, rebuy, leave)
+            <button className="btn-ghost h-9 w-full text-xs" onClick={() => setMenuOpen(true)}>
+              Seat options · sit out, rebuy, leave
             </button>
           )}
-          {!mySeat && !view.me.pendingRequest && !ended && <p className="text-center text-xs text-white/50">You are watching. Tap an empty seat to sit down.</p>}
+          {!mySeat && !view.me.pendingRequest && !ended && (
+            <p className="rounded-xl bg-white/[0.04] py-2.5 text-center text-sm text-white/60 ring-1 ring-inset ring-white/[0.06]">
+              You&apos;re watching. Tap a <span className="text-gold">+</span> seat to {view.tournament ? 'register' : 'sit down'}.
+            </p>
+          )}
         </footer>
       </div>
 
       {/* desktop side panel */}
-      <aside className="hidden w-80 border-l border-white/10 bg-black/30 lg:block">{panel}</aside>
+      <aside className="hidden w-[340px] border-l border-white/[0.06] bg-[#0a0e0d]/80 backdrop-blur-xl lg:block">{panel}</aside>
 
       {/* mobile drawer */}
       {panelOpen && (
-        <div className="fixed inset-0 z-40 flex flex-col bg-black/60 lg:hidden" onClick={() => setPanelOpen(false)}>
-          <div className="mt-auto h-[70dvh] rounded-t-2xl bg-[#101a16]" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-end px-3 pt-2">
-              <button className="text-2xl text-white/50" onClick={() => setPanelOpen(false)}>
-                ×
-              </button>
-            </div>
-            <div className="h-[calc(100%-2.5rem)]">{panel}</div>
+        <div className="fixed inset-0 z-40 flex flex-col bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setPanelOpen(false)}>
+          <div className="slide-up mt-auto h-[72dvh] rounded-t-3xl bg-[#0d1211] shadow-2xl ring-1 ring-white/10" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-white/20" />
+            <div className="h-[calc(100%-0.875rem)]">{panel}</div>
           </div>
         </div>
       )}
@@ -212,7 +224,16 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       {seatDialog !== null && <SeatDialog view={view} seat={seatDialog} emit={emit} onClose={() => setSeatDialog(null)} onError={setToast} />}
       {menuOpen && mySeat && <PlayerMenu view={view} emit={emit} onClose={() => setMenuOpen(false)} onError={setToast} />}
       {view.tournament?.finished && !standingsClosed && <Standings view={view} onClose={() => setStandingsClosed(true)} />}
-      {toast && <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-lg bg-black/90 px-4 py-2 text-sm shadow-lg">{toast}</div>}
+      {toast && (
+        <div className="slide-up fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-xl bg-[#141a18]/95 px-4 py-2.5 text-sm font-medium shadow-2xl ring-1 ring-white/10 backdrop-blur">
+          {toast}
+        </div>
+      )}
     </main>
   );
+}
+
+function Banner({ tone, children }: { tone: 'red' | 'amber' | 'sky'; children: React.ReactNode }) {
+  const cls = { red: 'bg-red-500/10 text-red-200 ring-red-500/20', amber: 'bg-amber-400/10 text-amber-200 ring-amber-400/20', sky: 'bg-sky-400/10 text-sky-100 ring-sky-400/20' }[tone];
+  return <div className={`mx-3 mt-1 rounded-xl px-3 py-2 text-center text-xs ring-1 ring-inset ${cls}`}>{children}</div>;
 }

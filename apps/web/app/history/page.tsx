@@ -5,6 +5,7 @@ import { PlayingCard } from '@/components/table/Card';
 import { api } from '@/lib/api';
 import { chips, signed } from '@/lib/format';
 import { useMe } from '@/lib/useMe';
+import { Loading, PageHeader } from '@/components/ui/PageHeader';
 
 interface Row {
   id: string;
@@ -57,35 +58,36 @@ export default function HistoryPage() {
     if (me && ready) load(true);
   }, [me, filters, ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!me) return <main className="grid min-h-dvh place-items-center text-white/50">Loading…</main>;
+  if (!me) return <Loading />;
   return (
-    <main className="mx-auto max-w-3xl space-y-4 p-4">
-      <header className="flex items-center gap-3">
-        <Link href="/lobby" className="text-white/60">
-          ←
-        </Link>
-        <h1 className="flex-1 text-xl font-bold">Hand history</h1>
-        <Link href="/stats" className="btn-secondary text-sm">
-          My stats
-        </Link>
-      </header>
-      <div className="card-panel flex flex-wrap items-center gap-2 text-sm">
-        <input className="input w-32 py-1 uppercase" placeholder="Room code" value={filters.room} onChange={(e) => setFilters({ ...filters, room: e.target.value.trim() })} />
-        <select className="input w-32 py-1" value={filters.result} onChange={(e) => setFilters({ ...filters, result: e.target.value })}>
+    <main className="mx-auto max-w-3xl space-y-4 px-4 pb-16 pt-5">
+      <PageHeader
+        back="/lobby"
+        title="Hand history"
+        subtitle="Every hand you played, ready to replay"
+        actions={
+          <Link href="/stats" className="btn-secondary">
+            My stats
+          </Link>
+        }
+      />
+      <div className="card-panel flex flex-wrap items-center gap-2 p-3 text-sm">
+        <input className="input h-10 w-36 font-mono uppercase" placeholder="Room code" value={filters.room} onChange={(e) => setFilters({ ...filters, room: e.target.value.trim() })} />
+        <select className="input h-10 w-36" value={filters.result} onChange={(e) => setFilters({ ...filters, result: e.target.value })}>
           <option value="">All results</option>
           <option value="won">Won</option>
           <option value="lost">Lost</option>
         </select>
-        <label className="flex items-center gap-1">
+        <label className="flex items-center gap-2 px-2 text-white/75">
           <input type="checkbox" checked={filters.showdown} onChange={(e) => setFilters({ ...filters, showdown: e.target.checked })} />
           Showdowns only
         </label>
       </div>
-      {rows.length === 0 && !loading && <p className="text-white/50">No hands yet.</p>}
+      {rows.length === 0 && !loading && <p className="card-panel text-center text-white/50">No hands yet. Play a few and they&apos;ll appear here.</p>}
       <ul className="space-y-2">
         {rows.map((h) => (
           <li key={h.id}>
-            <Link href={`/history/${h.id}`} className="card-panel flex items-center gap-3 p-3 hover:bg-white/10">
+            <Link href={`/history/${h.id}`} className="card-panel flex items-center gap-3 p-3 transition hover:bg-white/[0.06]">
               <div className="flex gap-0.5">
                 {h.holeCards.map((c, i) => (
                   <PlayingCard key={i} card={c} size="sm" />
@@ -104,7 +106,7 @@ export default function HistoryPage() {
                   </span>
                 </div>
               </div>
-              <div className={`text-right font-bold ${h.net > 0 ? 'text-emerald-400' : h.net < 0 ? 'text-red-400' : 'text-white/60'}`}>{signed(h.net)}</div>
+              <div className={`text-right font-display text-lg font-bold tabular ${h.net > 0 ? 'text-emerald-400' : h.net < 0 ? 'text-red-400' : 'text-white/60'}`}>{signed(h.net)}</div>
             </Link>
           </li>
         ))}

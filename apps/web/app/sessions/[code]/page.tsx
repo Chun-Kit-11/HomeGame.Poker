@@ -5,6 +5,8 @@ import type { RoomConfig } from '@poker/shared';
 import { api } from '@/lib/api';
 import { chips, money, signed } from '@/lib/format';
 import { useMe } from '@/lib/useMe';
+import { Loading, PageHeader } from '@/components/ui/PageHeader';
+import { Download } from '@/components/ui/Icons';
 
 interface Detail {
   room: { code: string; name: string; host: string; gameMode: 'CASH' | 'TOURNAMENT'; moneyMode: 'PLAY' | 'LEDGER'; status: string; createdAt: string; endedAt: string | null; config: RoomConfig };
@@ -40,31 +42,27 @@ export default function SessionPage({ params }: { params: Promise<{ code: string
   }, [me, code]);
 
   if (error) return <main className="p-6 text-center text-red-400">{error}</main>;
-  if (!d || !me) return <main className="grid min-h-dvh place-items-center text-white/50">Loading…</main>;
+  if (!d || !me) return <Loading />;
   const cur = d.ledger?.currency ?? '';
   const name = new Map(d.ledger?.balances.map((b) => [b.userId, b.username]) ?? []);
   const ended = d.room.status === 'ENDED';
   const sum = d.ledger?.balances.reduce((t, b) => t + b.net, 0) ?? 0;
 
   return (
-    <main className="mx-auto max-w-2xl space-y-4 p-4 pb-16">
-      <header className="flex items-center gap-3">
-        <Link href="/sessions" className="text-white/60">
-          ←
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold">{d.room.name}</h1>
-          <p className="text-xs text-white/50">
-            {d.room.code} · {d.room.gameMode === 'CASH' ? 'Cash game' : 'Tournament'} · host {d.room.host} · {new Date(d.room.createdAt).toLocaleString()}
-          </p>
-        </div>
-        <a className="btn-secondary text-sm" href={`/api/sessions/${d.room.code}/export.csv`}>
-          CSV
-        </a>
-      </header>
+    <main className="mx-auto max-w-2xl space-y-4 px-4 pb-16 pt-5">
+      <PageHeader
+        back="/sessions"
+        title={d.room.name}
+        subtitle={`${d.room.code} · ${d.room.gameMode === 'CASH' ? 'Cash game' : 'Tournament'} · host ${d.room.host} · ${new Date(d.room.createdAt).toLocaleDateString()}`}
+        actions={
+          <a className="btn-secondary" href={`/api/sessions/${d.room.code}/export.csv`}>
+            <Download className="h-4 w-4" /> CSV
+          </a>
+        }
+      />
 
       {!ended && (
-        <div className="rounded-lg bg-amber-900/40 p-3 text-sm">
+        <div className="rounded-xl bg-amber-400/10 p-3 text-sm text-amber-100 ring-1 ring-inset ring-amber-400/20">
           This session is still in progress; figures are provisional until the host ends it.{' '}
           <Link className="underline" href={`/room/${d.room.code}`}>
             Back to the table
@@ -103,7 +101,7 @@ export default function SessionPage({ params }: { params: Promise<{ code: string
           </table>
           {d.ledger.rounded && <p className="text-xs text-white/40">Some results were rounded to the nearest {cur} 0.01; rounding is spread so the total stays exactly zero.</p>}
           {d.ledger.discrepancies.map((x, i) => (
-            <p key={i} className="rounded bg-red-900/50 p-2 text-sm text-red-200">
+            <p key={i} className="rounded-xl bg-red-500/10 p-3 text-sm text-red-200 ring-1 ring-inset ring-red-500/25">
               ⚠ {x.message}
             </p>
           ))}
@@ -118,11 +116,11 @@ export default function SessionPage({ params }: { params: Promise<{ code: string
           ) : (
             <ul className="space-y-2">
               {d.ledger.transfers.map((t, i) => (
-                <li key={i} className="flex items-center gap-2 rounded-lg bg-white/5 p-3">
+                <li key={i} className="flex items-center gap-2 rounded-xl bg-black/25 p-3.5 ring-1 ring-inset ring-white/[0.06]">
                   <b>{name.get(t.from)}</b>
                   <span className="text-white/50">pays</span>
                   <b>{name.get(t.to)}</b>
-                  <span className="ml-auto text-lg font-bold text-amber-300">{money(t.amount, cur)}</span>
+                  <span className="ml-auto font-display text-lg font-extrabold tabular text-gold">{money(t.amount, cur)}</span>
                 </li>
               ))}
             </ul>
@@ -187,7 +185,7 @@ export default function SessionPage({ params }: { params: Promise<{ code: string
           </tbody>
         </table>
       </details>
-      <Link className="block text-center text-sm text-emerald-400 underline" href={`/history?room=${d.room.code}`}>
+      <Link className="block text-center text-sm font-semibold text-gold hover:underline" href={`/history?room=${d.room.code}`}>
         Hands from this session
       </Link>
     </main>

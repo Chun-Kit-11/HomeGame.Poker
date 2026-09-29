@@ -1,10 +1,13 @@
 @import "tailwindcss" source("../");
 
 @theme {
-  --color-felt: #0f5132;
-  --color-felt-dark: #0a3a24;
-  --color-rail: #3b2412;
-  --color-chip: #f5c542;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Manrope Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-ink: #07090a;
+  --color-panel: #0e1312;
+  --color-gold: #e3c173;
+  --color-gold-deep: #b8913f;
+  --color-felt: #15664a;
 }
 
 :root {
@@ -13,29 +16,80 @@
 
 html,
 body {
-  background: #0b1210;
-  color: #e7efe9;
+  background:
+    radial-gradient(1100px 520px at 50% -12%, rgba(16, 185, 129, 0.13), transparent 70%),
+    radial-gradient(900px 500px at 110% 110%, rgba(227, 193, 115, 0.06), transparent 70%),
+    #07090a;
+  background-attachment: fixed;
+  color: #eceeed;
   min-height: 100%;
   -webkit-tap-highlight-color: transparent;
+  font-feature-settings: "cv11", "ss01";
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: rgba(227, 193, 115, 0.35);
 }
 
 @utility btn {
-  @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-semibold transition active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100;
+  @apply inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold tracking-tight transition duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-gold/70 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40;
 }
 @utility btn-primary {
-  @apply btn bg-emerald-500 text-black hover:bg-emerald-400;
+  @apply btn bg-gradient-to-b from-[#f3dc9c] to-[#c9a24a] text-[#1b1407] shadow-[0_10px_30px_-12px_rgba(227,193,115,0.7)] ring-1 ring-inset ring-white/40 hover:brightness-105;
 }
 @utility btn-secondary {
-  @apply btn bg-white/10 text-white hover:bg-white/20;
+  @apply btn bg-white/[0.06] text-white ring-1 ring-inset ring-white/10 hover:bg-white/[0.1];
 }
 @utility btn-danger {
-  @apply btn bg-red-600 text-white hover:bg-red-500;
+  @apply btn bg-gradient-to-b from-[#e25c5c] to-[#a61b1b] text-white shadow-[0_10px_30px_-14px_rgba(220,38,38,0.8)] ring-1 ring-inset ring-white/20 hover:brightness-110;
+}
+@utility btn-ghost {
+  @apply btn bg-transparent text-white/70 hover:bg-white/[0.06] hover:text-white;
+}
+@utility icon-btn {
+  @apply inline-grid h-10 w-10 place-items-center rounded-xl bg-white/[0.05] text-white/80 ring-1 ring-inset ring-white/10 transition hover:bg-white/[0.1] hover:text-white active:scale-95;
 }
 @utility input {
-  @apply w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-white outline-none focus:border-emerald-400;
+  @apply h-11 w-full rounded-xl bg-black/40 px-3.5 text-[15px] text-white ring-1 ring-inset ring-white/10 outline-none transition placeholder:text-white/30 focus:ring-2 focus:ring-gold/60;
 }
 @utility card-panel {
-  @apply rounded-2xl border border-white/10 bg-white/5 p-4;
+  @apply rounded-2xl bg-white/[0.035] p-5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.9)] ring-1 ring-inset ring-white/[0.08] backdrop-blur-xl;
+}
+@utility eyebrow {
+  @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-white/45;
+}
+@utility pill {
+  @apply inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 py-1 text-xs text-white/75 ring-1 ring-inset ring-white/10;
+}
+
+input[type="range"] {
+  accent-color: #e3c173;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #e3c173;
+  width: 1rem;
+  height: 1rem;
+}
+select.input {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.5) 50%), linear-gradient(135deg, rgba(255, 255, 255, 0.5) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
 }
 
 @keyframes deal-in {
@@ -95,4 +149,17 @@ body {
 }
 .winner-glow {
   animation: winner-glow 1.2s ease-in-out infinite;
+}
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.slide-up {
+  animation: slide-up 0.18s ease-out both;
 }

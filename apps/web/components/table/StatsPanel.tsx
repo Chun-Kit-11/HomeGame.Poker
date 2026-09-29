@@ -13,7 +13,7 @@ export function StatsPanel({ view }: { view: TableView }) {
         <Stat label="Biggest pot" value={chips(view.stats.biggestPot)} />
       </div>
       {view.room.gameMode === 'CASH' && (
-        <table className="w-full text-xs">
+        <table className="w-full text-xs tabular">
           <thead className="text-white/50">
             <tr>
               <th className="text-left font-normal">Player</th>
@@ -47,9 +47,9 @@ export function StatsPanel({ view }: { view: TableView }) {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-white/5 p-2">
-      <div className="text-[11px] text-white/50">{label}</div>
-      <div className="text-lg font-bold">{value}</div>
+    <div className="rounded-xl bg-black/25 p-3 ring-1 ring-inset ring-white/[0.06]">
+      <div className="eyebrow">{label}</div>
+      <div className="mt-1 font-display text-xl font-bold tabular">{value}</div>
     </div>
   );
 }

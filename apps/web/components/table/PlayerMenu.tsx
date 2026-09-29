@@ -41,7 +41,7 @@ export function PlayerMenu({ view, emit, onClose, onError }: { view: TableView; 
         )}
         {cash && room > 0 && (
           <section className="space-y-2">
-            <h3 className="font-semibold">{mine.stack === 0 ? 'Rebuy' : 'Top up'}</h3>
+            <h3 className="eyebrow">{mine.stack === 0 ? 'Rebuy' : 'Top up'}</h3>
             <input type="range" className="w-full accent-emerald-400" min={1} max={room} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
             <button className="btn-secondary w-full" onClick={() => run(emit('player:rebuy', { amount }))}>
               Add {chips(amount)} chips

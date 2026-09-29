@@ -8,6 +8,8 @@ import { chips, signed } from '@/lib/format';
 import type { HandDetail } from '@/lib/handTypes';
 import { replay } from '@/lib/replay';
 import { useMe } from '@/lib/useMe';
+import { Loading, PageHeader } from '@/components/ui/PageHeader';
+import { Shield } from '@/components/ui/Icons';
 
 export default function HandPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -30,33 +32,26 @@ export default function HandPage({ params }: { params: Promise<{ id: string }> }
   const frames = useMemo(() => (hand ? replay(hand.events, names) : []), [hand, names]);
 
   if (error) return <main className="p-6 text-center text-red-400">{error}</main>;
-  if (!hand || !me) return <main className="grid min-h-dvh place-items-center text-white/50">Loading…</main>;
+  if (!hand || !me) return <Loading />;
   const i = Math.min(step, frames.length - 1);
   const f = frames[i];
 
   return (
-    <main className="mx-auto max-w-3xl space-y-4 p-4 pb-16">
-      <header className="flex items-center gap-3">
-        <Link href="/history" className="text-white/60">
-          ←
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-lg font-bold">
-            {hand.room.name} · Hand #{hand.handNo}
-          </h1>
-          <p className="text-xs text-white/50">
-            {new Date(hand.endedAt).toLocaleString()} · Blinds {hand.smallBlind}/{hand.bigBlind}
-            {hand.ante > 0 && ` · BB ante ${hand.ante}`}
-          </p>
-        </div>
-        <Link href={`/verify?hand=${hand.id}`} className="btn-secondary text-sm">
-          Verify
-        </Link>
-      </header>
+    <main className="mx-auto max-w-3xl space-y-4 px-4 pb-16 pt-5">
+      <PageHeader
+        back="/history"
+        title={`Hand #${hand.handNo}`}
+        subtitle={`${hand.room.name} · ${new Date(hand.endedAt).toLocaleString()} · ${hand.smallBlind}/${hand.bigBlind}${hand.ante > 0 ? ` · ante ${hand.ante}` : ''}`}
+        actions={
+          <Link href={`/verify?hand=${hand.id}`} className="btn-secondary">
+            <Shield className="h-4 w-4" /> Verify
+          </Link>
+        }
+      />
 
       {/* Replayer */}
-      <section className="card-panel space-y-3">
-        <div className="flex min-h-[64px] items-center justify-center gap-1">
+      <section className="card-panel space-y-3 bg-[radial-gradient(ellipse_at_50%_0%,rgba(23,102,73,0.35),transparent_70%)]">
+        <div className="flex min-h-[64px] items-center justify-center gap-1.5">
           {f.board.length === 0 && <span className="text-sm text-white/40">No board yet</span>}
           {f.board.map((c, k) => (
             <PlayingCard key={k} card={c} size="md" />
@@ -69,7 +64,7 @@ export default function HandPage({ params }: { params: Promise<{ id: string }> }
             ))}
           </div>
         )}
-        <div className="text-center text-sm text-amber-200">Pot {chips(f.pot + Object.values(f.bets).reduce((a, b) => a + b, 0))}</div>
+        <div className="text-center text-sm font-semibold tabular text-gold">Pot {chips(f.pot + Object.values(f.bets).reduce((a, b) => a + b, 0))}</div>
         <ul className="divide-y divide-white/5 text-sm">
           {hand.players.map((p) => {
             const cards = f.shown[p.seat] ?? (p.seat === hand.mySeat ? p.holeCards : null);
@@ -87,7 +82,7 @@ export default function HandPage({ params }: { params: Promise<{ id: string }> }
             );
           })}
         </ul>
-        <p className="min-h-[2.5rem] text-center text-sm">{f.label}</p>
+        <p className="min-h-[2.5rem] rounded-xl bg-black/30 px-3 py-2 text-center text-sm">{f.label}</p>
         <div className="flex items-center justify-center gap-2">
           <button className="btn-secondary px-3" onClick={() => setStep(0)}>
             ⏮
@@ -109,7 +104,7 @@ export default function HandPage({ params }: { params: Promise<{ id: string }> }
 
       {/* Summary */}
       <section className="card-panel">
-        <h2 className="mb-2 font-bold">Result</h2>
+        <h2 className="mb-3 text-lg font-bold">Result</h2>
         <table className="w-full text-sm">
           <tbody>
             {hand.players.map((p) => (

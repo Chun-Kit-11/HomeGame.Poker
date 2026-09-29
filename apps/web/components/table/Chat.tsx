@@ -10,18 +10,26 @@ export function Chat({ chat, emit, meId }: { chat: ChatMessage[]; emit: Emit; me
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 space-y-1 overflow-y-auto p-2 text-sm">
+      <div className="flex-1 space-y-1.5 overflow-y-auto p-3 text-sm">
         {chat.map((m) => (
-          <div key={m.id} className={m.system ? 'text-xs italic text-white/50' : ''}>
-            {!m.system && <span className={`font-semibold ${m.userId === meId ? 'text-sky-300' : 'text-emerald-300'}`}>{m.username}: </span>}
-            <span className="break-words">{m.text}</span>
-          </div>
+          m.system ? (
+            <div key={m.id} className="py-0.5 text-center text-[11px] text-white/40">
+              {m.text}
+            </div>
+          ) : (
+            <div key={m.id} className={`flex ${m.userId === meId ? 'justify-end' : ''}`}>
+              <div className={`max-w-[85%] rounded-2xl px-3 py-1.5 ${m.userId === meId ? 'rounded-br-md bg-gold/15 ring-1 ring-inset ring-gold/20' : 'rounded-bl-md bg-white/[0.06]'}`}>
+                {m.userId !== meId && <div className="text-[11px] font-semibold text-emerald-300">{m.username}</div>}
+                <div className="break-words">{m.text}</div>
+              </div>
+            </div>
+          )
         ))}
         <div ref={endRef} />
       </div>
-      <div className="flex flex-wrap gap-1 border-t border-white/10 p-2">
+      <div className="flex gap-1 overflow-x-auto border-t border-white/[0.06] px-2 py-1.5">
         {REACTIONS.map((e) => (
-          <button key={e} className="rounded-md px-1 text-xl hover:bg-white/10" onClick={() => emit('chat:react', { emoji: e })}>
+          <button key={e} className="shrink-0 rounded-lg px-1.5 py-0.5 text-xl transition hover:scale-110 hover:bg-white/10" onClick={() => emit('chat:react', { emoji: e })}>
             {e}
           </button>
         ))}
@@ -35,8 +43,8 @@ export function Chat({ chat, emit, meId }: { chat: ChatMessage[]; emit: Emit; me
           setText('');
         }}
       >
-        <input className="input py-1.5 text-sm" value={text} maxLength={200} placeholder="Say something…" onChange={(e) => setText(e.target.value)} />
-        <button className="btn-primary px-3 py-1.5 text-sm">Send</button>
+        <input className="input h-10 text-sm" value={text} maxLength={200} placeholder="Message the table…" onChange={(e) => setText(e.target.value)} />
+        <button className="btn-primary h-10 px-4">Send</button>
       </form>
     </div>
   );

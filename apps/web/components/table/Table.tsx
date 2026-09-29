@@ -3,12 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 import type { TableView } from '@poker/shared';
 import { chips } from '@/lib/format';
 import type { Reaction } from '@/lib/useTable';
-import { PlayingCard } from './Card';
+import { Chip, PlayingCard } from './Card';
 import { EmptySeat, Seat } from './Seat';
 
 /** Seat positions around an ellipse, rotated so the viewer sits at the bottom. */
 function layout(n: number, mySeat: number | null, landscape: boolean) {
-  const rx = landscape ? 43 : 38;
+  const rx = landscape ? 43 : 40;
   const ry = landscape ? 35 : 39;
   const anchor = mySeat ?? 0;
   return Array.from({ length: n }, (_, seat) => {
@@ -62,31 +62,41 @@ export function Table({
   return (
     <div ref={ref} className="grid h-full w-full place-items-center">
     <div className="relative" style={{ width: w, height: h }}>
-      {/* felt */}
-      <div className="absolute inset-[9%] rounded-[50%] border-[10px] border-[#3b2412] bg-[radial-gradient(ellipse_at_center,#15803d_0%,#0f5132_60%,#0a3a24_100%)] shadow-[inset_0_0_40px_rgba(0,0,0,0.6),0_10px_30px_rgba(0,0,0,0.6)]" />
+      {/* rail + felt */}
+      <div className="absolute inset-[8%] rounded-[50%] bg-gradient-to-b from-[#3d2b1d] via-[#23170f] to-[#150e08] p-[1.6%] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-[#e3c173]/25">
+        <div className="relative h-full w-full overflow-hidden rounded-[50%] bg-[radial-gradient(ellipse_at_50%_38%,#2a8a62_0%,#176649_38%,#0e4a34_70%,#093325_100%)] shadow-[inset_0_0_60px_rgba(0,0,0,0.65),inset_0_0_0_2px_rgba(0,0,0,0.35)]">
+          <div className="absolute inset-[7%] rounded-[50%] border border-[#e3c173]/15" />
+          <div className="absolute inset-0 opacity-[0.08] mix-blend-overlay [background-image:radial-gradient(rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:3px_3px]" />
+          <div className="absolute left-1/2 top-[24%] -translate-x-1/2 select-none font-display text-[clamp(10px,2.2vw,15px)] font-extrabold uppercase tracking-[0.45em] text-white/[0.07]">
+            Home Game
+          </div>
+        </div>
+      </div>
 
       {/* centre: pot + board */}
       <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2">
         {hand && hand.totalPot > 0 && (
-          <div className="rounded-full bg-black/50 px-3 py-0.5 text-xs font-bold text-amber-200">
-            Pot {chips(hand.totalPot)}
-            {hand.pots.length > 1 && <span className="ml-1 font-normal text-white/60">({hand.pots.map((p) => chips(p.amount)).join(' + ')})</span>}
+          <div className="flex items-center gap-2 rounded-full bg-black/55 py-1 pl-1.5 pr-3 text-xs ring-1 ring-inset ring-white/10 backdrop-blur">
+            <Chip className="h-4 w-4" color="#b8913f" />
+            <span className="text-white/60">Pot</span>
+            <span className="font-bold tabular text-gold">{chips(hand.totalPot)}</span>
+            {hand.pots.length > 1 && <span className="tabular text-white/45">({hand.pots.map((p) => chips(p.amount)).join(' + ')})</span>}
           </div>
         )}
         <div className="flex gap-1">
           {(hand?.board ?? []).map((c, i) => (
-            <PlayingCard key={`${hand!.handNo}-${i}`} card={c} size={h > 420 ? 'lg' : 'md'} />
+            <PlayingCard key={`${hand!.handNo}-${i}`} card={c} size={w >= 560 && h > 380 ? 'lg' : 'md'} />
           ))}
         </div>
         {hand?.board2 && (
           <div className="flex gap-1">
             {hand.board2.map((c, i) => (
-              <PlayingCard key={`b2-${i}`} card={c} size={h > 420 ? 'md' : 'sm'} dim={i < 3 && hand.board.length === 5 && hand.board2![i] === hand.board[i]} />
+              <PlayingCard key={`b2-${i}`} card={c} size={w >= 560 && h > 380 ? 'md' : 'sm'} dim={i < 3 && hand.board.length === 5 && hand.board2![i] === hand.board[i]} />
             ))}
           </div>
         )}
         {hand?.phase === 'complete' && hand.results.length > 0 && (
-          <div className="max-w-[60vw] text-center text-xs text-amber-100">
+          <div className="max-w-[60vw] rounded-xl bg-black/45 px-3 py-1.5 text-center text-xs font-medium text-gold/95 ring-1 ring-inset ring-gold/20 backdrop-blur">
             {hand.results
               .filter((r) => r.description)
               .slice(0, 3)
@@ -101,8 +111,8 @@ export function Table({
         {hand?.fair && (
           <div className="text-[10px] text-white/40">
             {hand.phase === 'complete' ? (
-              <a className="underline" href={`/verify?room=${view.room.code}&n=${hand.handNo}`} target="_blank" rel="noreferrer">
-                Hand #{hand.handNo} · verify shuffle
+              <a className="hover:text-gold" href={`/verify?room=${view.room.code}&n=${hand.handNo}`} target="_blank" rel="noreferrer">
+                Hand #{hand.handNo} · verify shuffle ↗
               </a>
             ) : (
               <span title={`SHA-256 of the server seed: ${hand.fair.serverSeedHash}`}>
@@ -111,7 +121,11 @@ export function Table({
             )}
           </div>
         )}
-        {!hand && <div className="text-sm text-white/60">{view.notice ?? (view.room.status === 'OPEN' ? 'Waiting for the host to start' : '')}</div>}
+        {!hand && (
+          <div className="rounded-full bg-black/40 px-4 py-1.5 text-sm text-white/65 ring-1 ring-inset ring-white/10">
+            {view.notice ?? (view.room.status === 'OPEN' ? 'Waiting for the host to start' : '')}
+          </div>
+        )}
         {hand?.phase === 'complete' && view.notice && <div className="text-xs text-white/50">{view.notice}</div>}
       </div>
 
@@ -151,14 +165,14 @@ export function Table({
             </div>
             {bet > 0 && (
               <div className="chip-in absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${bx}%`, top: `${by}%` }}>
-                <div className="flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-bold text-white">
-                  <span className="inline-block h-3 w-3 rounded-full border-2 border-dashed border-white bg-red-600" />
+                <div className="flex items-center gap-1.5 rounded-full bg-black/60 py-0.5 pl-0.5 pr-2 text-[11px] font-bold tabular text-white ring-1 ring-inset ring-white/10">
+                  <Chip className="h-4 w-4" color={bet >= view.room.bigBlind * 10 ? '#1d4ed8' : bet >= view.room.bigBlind * 3 ? '#15803d' : '#c8202e'} />
                   {chips(bet)}
                 </div>
               </div>
             )}
             {hand?.buttonSeat === seat && !sv && (
-              <div className="absolute grid h-5 w-5 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/70 text-[10px] font-black text-black" style={{ left: `${bx}%`, top: `${by}%` }}>
+              <div className="absolute grid h-5 w-5 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gradient-to-b from-white to-[#d9d6cc] text-[10px] font-black text-black/80 opacity-70 shadow" style={{ left: `${bx}%`, top: `${by}%` }}>
                 D
               </div>
             )}

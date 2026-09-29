@@ -48,17 +48,17 @@ export function HostPanel({ view, emit, onError }: { view: TableView; emit: Emit
       </section>
 
       <section>
-        <h3 className="mb-1 font-semibold">Requests</h3>
+        <h3 className="eyebrow mb-2">Requests</h3>
         {view.requests.length === 0 && <p className="text-xs text-white/50">No pending requests</p>}
         {view.requests.map((r) => (
-          <div key={r.id} className="flex items-center gap-2 border-b border-white/5 py-1">
+          <div key={r.id} className="mb-2 flex items-center gap-2 rounded-xl bg-gold/[0.06] p-2.5 ring-1 ring-inset ring-gold/20">
             <div className="flex-1">
               <b>{r.username}</b> · {r.kind === 'buyIn' ? 'buy-in' : r.kind} {chips(r.amount)}
             </div>
-            <button className="btn-secondary px-2 py-1 text-xs" onClick={() => run(emit('host:deny', { requestId: r.id }))}>
+            <button className="btn-secondary h-8 px-3 text-xs" onClick={() => run(emit('host:deny', { requestId: r.id }))}>
               Deny
             </button>
-            <button className="btn-primary px-2 py-1 text-xs" onClick={() => run(emit('host:approve', { requestId: r.id }))}>
+            <button className="btn-primary h-8 px-3 text-xs" onClick={() => run(emit('host:approve', { requestId: r.id }))}>
               Approve
             </button>
           </div>
@@ -71,12 +71,12 @@ export function HostPanel({ view, emit, onError }: { view: TableView; emit: Emit
 
       {view.room.gameMode === 'CASH' && status !== 'ENDED' && (
         <section>
-          <h3 className="mb-1 font-semibold">Blinds (from next hand)</h3>
+          <h3 className="eyebrow mb-2">Blinds · from next hand</h3>
           <div className="flex items-center gap-2">
-            <input className="input w-20 py-1" type="number" min={1} value={sb} onChange={(e) => setSb(Number(e.target.value))} />
-            <span>/</span>
-            <input className="input w-20 py-1" type="number" min={1} value={bb} onChange={(e) => setBb(Number(e.target.value))} />
-            <button className="btn-secondary px-3 py-1" onClick={() => run(emit('host:setBlinds', { smallBlind: sb, bigBlind: bb }))}>
+            <input className="input h-10 w-20" type="number" min={1} value={sb} onChange={(e) => setSb(Number(e.target.value))} />
+            <span className="text-white/40">/</span>
+            <input className="input h-10 w-20" type="number" min={1} value={bb} onChange={(e) => setBb(Number(e.target.value))} />
+            <button className="btn-secondary h-10 px-4" onClick={() => run(emit('host:setBlinds', { smallBlind: sb, bigBlind: bb }))}>
               Set
             </button>
           </div>
@@ -89,7 +89,7 @@ export function HostPanel({ view, emit, onError }: { view: TableView; emit: Emit
       )}
 
       <section>
-        <h3 className="mb-1 font-semibold">Players</h3>
+        <h3 className="eyebrow mb-2">Players</h3>
         {people.length === 0 && <p className="text-xs text-white/50">Nobody else here yet</p>}
         {people.map((p) => (
           <div key={p.userId} className="flex items-center justify-between py-1">

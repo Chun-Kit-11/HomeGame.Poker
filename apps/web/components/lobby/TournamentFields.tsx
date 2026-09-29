@@ -74,7 +74,7 @@ export function TournamentFields({ config, setConfig }: { config: RoomConfig; se
       )}
 
       <div className="col-span-2">
-        <button type="button" className="text-sm text-emerald-400 underline" onClick={() => setShowLevels(!showLevels)}>
+        <button type="button" className="text-sm font-semibold text-gold hover:underline" onClick={() => setShowLevels(!showLevels)}>
           {showLevels ? 'Hide' : 'Edit'} blind schedule ({t.levels.length} levels, BB ante from level {t.levels.findIndex((l) => l.ante > 0) + 1 || '—'})
         </button>
         {showLevels && (

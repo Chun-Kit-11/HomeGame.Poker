@@ -7,6 +7,7 @@ import { PlayingCard } from '@/components/table/Card';
 import { api } from '@/lib/api';
 import type { HandDetail } from '@/lib/handTypes';
 import { useSearchParams } from 'next/navigation';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 function VerifyInner() {
   const params = useSearchParams();
@@ -59,13 +60,8 @@ function VerifyInner() {
   const same = (a: number[] | null | undefined, b: number[] | null | undefined) => !!a && !!b && a.length === b.length && a.every((x, i) => x === b[i]);
 
   return (
-    <main className="mx-auto max-w-3xl space-y-4 p-4 pb-16">
-      <header className="flex items-center gap-3">
-        <Link href={hand ? `/history/${hand.id}` : '/lobby'} className="text-white/60">
-          ←
-        </Link>
-        <h1 className="text-xl font-bold">Verify a hand</h1>
-      </header>
+    <main className="mx-auto max-w-3xl space-y-4 px-4 pb-16 pt-5">
+      <PageHeader back={hand ? `/history/${hand.id}` : '/lobby'} title="Verify a hand" subtitle="Check the shuffle yourself: nothing to trust" />
 
       <section className="card-panel space-y-2 text-sm text-white/70">
         <p>
@@ -104,7 +100,7 @@ function VerifyInner() {
 
       {result && (
         <section className="card-panel space-y-3">
-          <p className={`font-bold ${result.hashOk ? 'text-emerald-400' : 'text-red-400'}`}>
+          <p className={`rounded-xl px-4 py-3 font-semibold ring-1 ring-inset ${result.hashOk ? 'bg-emerald-400/10 text-emerald-300 ring-emerald-400/25' : 'bg-red-500/10 text-red-300 ring-red-500/25'}`}>
             {result.hashOk ? '✓ The server seed matches the commitment' : '✗ The server seed does NOT match the commitment'}
           </p>
           <div>
