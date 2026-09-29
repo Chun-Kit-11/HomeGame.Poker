@@ -2,6 +2,8 @@
 import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
 import { HandAnalysis } from '@/components/history/HandAnalysis';
+import { HandHistoryView, type HistoryDisplay } from '@/components/history/HandHistoryView';
+import { HistoryToolbar } from '@/components/history/HistoryToolbar';
 import { PlayingCard } from '@/components/table/Card';
 import { api } from '@/lib/api';
 import { chips, signed } from '@/lib/format';
@@ -17,6 +19,8 @@ export default function HandPage({ params }: { params: Promise<{ id: string }> }
   const [hand, setHand] = useState<HandDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
+  const [display, setDisplay] = useState<HistoryDisplay>({ bb: false, anonymous: false });
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!me) return;
@@ -49,8 +53,18 @@ export default function HandPage({ params }: { params: Promise<{ id: string }> }
         }
       />
 
-      {/* Replayer */}
-      <section className="card-panel space-y-3 bg-[radial-gradient(ellipse_at_50%_0%,rgba(23,102,73,0.35),transparent_70%)]">
+      <section className="-mx-4 overflow-hidden bg-[#0c0c0b] sm:mx-0 sm:rounded-2xl sm:ring-1 sm:ring-white/[0.08]">
+        <HandHistoryView hand={hand} display={display} />
+        <div className="border-t border-white/[0.06] py-3">
+          <HistoryToolbar hand={hand} display={display} setDisplay={setDisplay} onMessage={setMessage} />
+          {message && <p className="mt-2 text-center text-xs text-white/60">{message}</p>}
+        </div>
+      </section>
+
+      {/* Step-by-step replayer */}
+      <details className="card-panel">
+        <summary className="cursor-pointer font-bold">Step-by-step replay</summary>
+      <section className="mt-3 space-y-3">
         <div className="flex min-h-[64px] items-center justify-center gap-1.5">
           {f.board.length === 0 && <span className="text-sm text-white/40">No board yet</span>}
           {f.board.map((c, k) => (
@@ -101,25 +115,7 @@ export default function HandPage({ params }: { params: Promise<{ id: string }> }
           </button>
         </div>
       </section>
-
-      {/* Summary */}
-      <section className="card-panel">
-        <h2 className="mb-3 text-lg font-bold">Result</h2>
-        <table className="w-full text-sm">
-          <tbody>
-            {hand.players.map((p) => (
-              <tr key={p.seat} className="border-t border-white/5">
-                <td className="py-1">{p.username}</td>
-                <td className="text-xs text-white/50">{p.position}</td>
-                <td>
-                  <span className="flex gap-0.5">{p.holeCards ? p.holeCards.map((c, k) => <PlayingCard key={k} card={c} size="xs" />) : <span className="text-xs text-white/30">mucked / hidden</span>}</span>
-                </td>
-                <td className={`text-right font-semibold ${p.net > 0 ? 'text-emerald-400' : p.net < 0 ? 'text-red-400' : ''}`}>{signed(p.net)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      </details>
 
       {/* Full log */}
       <details className="card-panel">

@@ -11,10 +11,13 @@ import { StatsPanel } from '@/components/table/StatsPanel';
 import { Table } from '@/components/table/Table';
 import { useCountdown } from '@/components/table/TimerRing';
 import { MobileActions } from '@/components/table/MobileActions';
+import { HandHistorySheet } from '@/components/history/HandHistorySheet';
+import { ProfileSheet } from '@/components/table/ProfileSheet';
+import { api } from '@/lib/api';
 import { SettingsPanel } from '@/components/table/SettingsPanel';
 import { Standings } from '@/components/table/TournamentBar';
 import { DisplayProvider, useDisplay, useTheme } from '@/lib/display';
-import { Chat as ChatIcon, ChevronLeft, Copy, Settings, Volume, VolumeOff } from '@/components/ui/Icons';
+import { Chat as ChatIcon, ChevronLeft, Copy, History as HistoryIcon, Settings, Volume, VolumeOff } from '@/components/ui/Icons';
 import { Loading } from '@/components/ui/PageHeader';
 import { chips } from '@/lib/format';
 import { isMuted, playSound, setMuted } from '@/lib/sounds';
@@ -55,6 +58,21 @@ function Room({ table }: { table: ReturnType<typeof useTable> }) {
   const theme = useTheme();
   const { unit, setUnit } = useDisplay();
   const [portrait, setPortrait] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [profileOf, setProfileOf] = useState<string | null>(null);
+  const [labels, setLabels] = useState<Record<string, string | null>>({});
+  // My colour labels for the players at the table
+  const seatedIds = view.seats
+    .filter((s) => s && s.userId !== view.me.userId)
+    .map((s) => s!.userId)
+    .sort()
+    .join(',');
+  useEffect(() => {
+    if (!seatedIds) return;
+    api<{ notes: Record<string, { color: string | null }> }>(`/players/notes?ids=${seatedIds}`)
+      .then((r) => setLabels(Object.fromEntries(Object.entries(r.notes).map(([k, v]) => [k, v.color]))))
+      .catch(() => undefined);
+  }, [seatedIds]);
   const [tab, setTab] = useState<Tab>('chat');
   const [panelOpen, setPanelOpen] = useState(false);
   const [seatDialog, setSeatDialog] = useState<number | null>(null);
@@ -170,7 +188,7 @@ function Room({ table }: { table: ReturnType<typeof useTable> }) {
           <Link href="/lobby" className="icon-btn" aria-label="Lobby">
             <ChevronLeft />
           </Link>
-          <div className="min-w-0 flex-1 pl-1">
+          <div className="hidden min-w-0 flex-1 pl-1 min-[440px]:block">
             <div className="truncate font-display text-[15px] font-bold leading-tight">{view.room.name}</div>
             <div className="truncate text-xs text-white/50">
               <span className="text-gold/90">
@@ -182,6 +200,7 @@ function Room({ table }: { table: ReturnType<typeof useTable> }) {
               {view.room.moneyMode === 'LEDGER' && ' · Ledger'}
             </div>
           </div>
+          <span className="flex-1 min-[440px]:hidden" />
           <button
             className="pill h-10 gap-2 rounded-xl px-3 font-mono text-[13px] font-semibold tracking-wider text-white"
             title="Copy invite link"
@@ -192,6 +211,9 @@ function Room({ table }: { table: ReturnType<typeof useTable> }) {
             <span className={`h-2 w-2 rounded-full ${connected ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-red-500'}`} />
             {view.room.code}
             <Copy className="h-3.5 w-3.5 text-white/50" />
+          </button>
+          <button className="icon-btn" title="Hand history" aria-label="Hand history" onClick={() => setHistoryOpen(true)}>
+            <HistoryIcon className="h-[18px] w-[18px]" />
           </button>
           <button className="icon-btn w-11 font-display text-xs font-extrabold text-white/80" title="Show amounts in chips or big blinds" onClick={() => setUnit(unit === 'bb' ? 'chips' : 'bb')}>
             {unit === 'bb' ? 'BB' : '123'}
@@ -231,7 +253,9 @@ function Room({ table }: { table: ReturnType<typeof useTable> }) {
             onSeatClick={(seat) => setSeatDialog(seat)}
             onPlayerClick={(uid) => {
               if (uid === view.me.userId) setMenuOpen(true);
+              else setProfileOf(uid);
             }}
+            labels={labels}
             onLayout={setPortrait}
             controls={<MobileActions view={view} emit={emit} skew={skew} onError={setToast} onStart={startGame} />}
           />
@@ -292,6 +316,17 @@ function Room({ table }: { table: ReturnType<typeof useTable> }) {
 
       {seatDialog !== null && <SeatDialog view={view} seat={seatDialog} emit={emit} onClose={() => setSeatDialog(null)} onError={setToast} />}
       {menuOpen && mySeat && <PlayerMenu view={view} emit={emit} onClose={() => setMenuOpen(false)} onError={setToast} />}
+      {historyOpen && (
+        <HandHistorySheet roomCode={view.room.code} defaultBB={unit === 'bb'} onClose={() => setHistoryOpen(false)} onMessage={setToast} />
+      )}
+      {profileOf && (
+        <ProfileSheet
+          userId={profileOf}
+          view={view}
+          onClose={() => setProfileOf(null)}
+          onLabel={(uid, color) => setLabels((l) => ({ ...l, [uid]: color }))}
+        />
+      )}
       {view.tournament?.finished && !standingsClosed && <Standings view={view} onClose={() => setStandingsClosed(true)} />}
       {toast && (
         <div className="slide-up fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-xl bg-[#141a18]/95 px-4 py-2.5 text-sm font-medium shadow-2xl ring-1 ring-white/10 backdrop-blur">

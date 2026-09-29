@@ -26,6 +26,22 @@ model User {
   memberships RoomMember[]
   handPlayers HandPlayer[]
   ledger      LedgerEntry[]
+  notesWritten PlayerNote[] @relation("NoteOwner")
+  notesAbout   PlayerNote[] @relation("NoteTarget")
+}
+
+/// A private note/colour label one player keeps about another (only the owner sees it).
+model PlayerNote {
+  ownerId   String
+  targetId  String
+  owner     User     @relation("NoteOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  target    User     @relation("NoteTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  /// Label colour as a hex string, or null
+  color     String?
+  note      String   @default("")
+  updatedAt DateTime @updatedAt
+
+  @@id([ownerId, targetId])
 }
 
 model Session {

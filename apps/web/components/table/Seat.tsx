@@ -44,6 +44,7 @@ export function Seat({
   usingBank,
   reaction,
   side,
+  labelColor,
   onClick,
 }: {
   seat: SeatView;
@@ -54,6 +55,7 @@ export function Seat({
   usingBank: boolean;
   reaction: string | null;
   side: 'left' | 'right' | 'center';
+  labelColor?: string | null;
   onClick?: () => void;
 }) {
   const fmt = useAmount();
@@ -91,6 +93,7 @@ export function Seat({
           </div>
         )}
         {reaction && <div className="reaction-pop absolute -top-9 left-1/2 text-3xl drop-shadow-lg">{reaction}</div>}
+        {labelColor && <span className="absolute -left-1 top-0 z-20 h-4 w-4 rounded-full ring-2 ring-black" style={{ background: labelColor }} title="Your label" />}
       </div>
       <div
         className={`relative z-10 -mt-3 w-full rounded-xl px-2 pb-1.5 pt-1 text-center shadow-[0_10px_24px_-8px_rgba(0,0,0,0.9)] ring-1 ring-inset backdrop-blur-md ${

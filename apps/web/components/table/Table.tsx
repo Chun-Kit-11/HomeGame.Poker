@@ -83,6 +83,7 @@ export function Table({
   onPlayerClick,
   controls,
   onLayout,
+  labels = {},
 }: {
   view: TableView;
   skew: number;
@@ -93,6 +94,8 @@ export function Table({
   controls?: React.ReactNode;
   /** Tells the page which layout is in use */
   onLayout?: (portrait: boolean) => void;
+  /** My colour labels for players (userId -> colour) */
+  labels?: Record<string, string | null>;
 }) {
   const { ref, w, h, portrait } = useFit();
   useEffect(() => onLayout?.(portrait), [portrait, onLayout]);
@@ -239,6 +242,7 @@ export function Table({
                       usingBank={!!hand?.usingTimeBank}
                       reaction={reactionFor(sv.userId)}
                       side={side}
+                      labelColor={labels[sv.userId] ?? null}
                       onClick={() => onPlayerClick(sv.userId)}
                     />
                   ) : (

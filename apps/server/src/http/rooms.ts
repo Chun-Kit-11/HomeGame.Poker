@@ -49,6 +49,22 @@ export function roomsRouter(manager: RoomManager): Router {
     res.json({ rooms: rooms.map((x) => ({ ...x, host: x.host.username })) });
   });
 
+  /** Recent hands of a room, newest first (members only): powers the in-table history sheet. */
+  r.get('/:code/hands', requireUser, async (req, res) => {
+    const room = await db().room.findUnique({ where: { code: String(req.params.code).toUpperCase() }, select: { id: true, hostId: true } });
+    if (!room) {
+      res.status(404).json({ error: 'Room not found' });
+      return;
+    }
+    const member = await db().roomMember.findUnique({ where: { roomId_userId: { roomId: room.id, userId: req.user!.id } } });
+    if (!member && room.hostId !== req.user!.id) {
+      res.status(403).json({ error: 'Join the room first' });
+      return;
+    }
+    const hands = await db().hand.findMany({ where: { roomId: room.id }, orderBy: { handNo: 'desc' }, take: 50, select: { id: true, handNo: true, endedAt: true } });
+    res.json({ hands });
+  });
+
   r.get('/:code', requireUser, async (req, res) => {
     const row = await db().room.findUnique({
       where: { code: String(req.params.code).toUpperCase() },

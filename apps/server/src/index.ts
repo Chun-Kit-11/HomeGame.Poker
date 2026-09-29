@@ -12,6 +12,7 @@ import { handsRouter } from './http/hands';
 import { roomsRouter } from './http/rooms';
 import { sessionsRouter } from './http/sessions';
 import { statsRouter } from './http/stats';
+import { playersRouter } from './http/players';
 import { PrismaPersistence } from './persistence';
 import { FairDealer } from './rooms/dealer';
 import { RoomManager } from './rooms/RoomManager';
@@ -39,6 +40,7 @@ async function main() {
     api.use('/hands', handsRouter());
     api.use('/sessions', sessionsRouter());
     api.use('/stats', statsRouter());
+    api.use('/players', playersRouter());
   });
   app.all('/{*path}', (req, res) => handle(req, res));
 

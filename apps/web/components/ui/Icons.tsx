@@ -110,3 +110,34 @@ export const Lock = ({ className }: P) => (
     <path d="M8 11V7a4 4 0 018 0v4" />
   </svg>
 );
+export const Share = ({ className }: P) => (
+  <svg {...base(className)}>
+    <circle cx="18" cy="5" r="2.5" />
+    <circle cx="6" cy="12" r="2.5" />
+    <circle cx="18" cy="19" r="2.5" />
+    <path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" />
+  </svg>
+);
+export const Incognito = ({ className }: P) => (
+  <svg {...base(className)}>
+    <path d="M3 11h18M5.5 11l1.8-5.4A1.5 1.5 0 018.7 4.5h6.6a1.5 1.5 0 011.4 1.1L18.5 11" />
+    <circle cx="7.5" cy="16.5" r="2.5" />
+    <circle cx="16.5" cy="16.5" r="2.5" />
+    <path d="M10 16.5c1.3-.8 2.7-.8 4 0" />
+  </svg>
+);
+export const SkipBack = ({ className }: P) => (
+  <svg {...base(className)}>
+    <path d="M6 5v14M18 6l-8 6 8 6" />
+  </svg>
+);
+export const SkipForward = ({ className }: P) => (
+  <svg {...base(className)}>
+    <path d="M18 5v14M6 6l8 6-8 6" />
+  </svg>
+);
+export const ChevronRight = ({ className }: P) => (
+  <svg {...base(className)}>
+    <path d="M9 18l6-6-6-6" />
+  </svg>
+);
