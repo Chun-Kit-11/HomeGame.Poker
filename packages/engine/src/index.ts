@@ -4,3 +4,4 @@ export * from './types';
 export * from './pots';
 export * from './positions';
 export * from './hand';
+export * from './stats';
